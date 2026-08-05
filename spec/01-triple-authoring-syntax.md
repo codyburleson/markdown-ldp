@@ -77,15 +77,36 @@ ex:Einstein a ex:Person ;
     ex:developed ex:Theory_of_Relativity .
 ```
 
-Rules:
+**Value forms** (shared with Layer B, §4.1.2):
 - A `[[wikilink]]` value → an **internal IRI** (resource object).
 - A Markdown link `[label](target)` value → an **IRI** too: an absolute-URI
   target (`https://…`, `mailto:…`) is an **external IRI** used verbatim; a vault
   path (`./Note.md`) resolves like a wikilink to an **internal IRI**. See §4.1.2.
 - A bare scalar → a **literal**; datatype inferred (date, integer, boolean),
   else `xsd:string`. **[DECIDE]** inference aggressiveness.
-- Repeated keys or list values → multiple triples (same predicate).
-- Predicate name → an IRI in the vocab namespace (see `02-data-model.md`).
+- Multiple objects: a repeated key, a YAML list, or a comma-separated `::` value
+  (`field:: [[A]], [[B]]`) → **multiple triples** (same predicate). **[DECIDE]**
+  confirm comma-splitting for inline `::` fields (Dataview does not always split).
+
+### 3.1 Which keys become triples (frontmatter hygiene)
+
+**Not every frontmatter key is a statement.** Blindly mapping all keys would mint
+nonsense triples from configuration. Default policy:
+
+- **Reserved keys are ignored** — a built-in denylist of Obsidian/ecosystem
+  config keys: `tags`, `aliases`, `cssclasses`, `publish`, `permalink`,
+  `created`/`updated`, and tool-owned blocks (Templater, etc.). User-configurable.
+- **`tags` yields no triples** here, consistent with §7 (and §9's example).
+- **`type` — and Turtle's `a` — is the reserved typing key** → `rdf:type` (§8).
+- Every **other** key maps to a predicate in the vault vocabulary. Unknown
+  predicates are allowed but flagged as "undefined vocabulary" (§6), never errors.
+- **CURIE keys are allowed** for power users: `dct:creator:: [[X]]` (or
+  frontmatter `dct:creator:`) targets that vocabulary directly via the prefix-map.
+- **One datatype-inference path.** To avoid frontmatter-YAML vs Dataview-string
+  divergence, inference runs on the value's **string form** by one shared rule, so
+  `born: 1879` and `born:: 1879` yield the *same* typed literal.
+- Key/predicate slugging (spaces, case) follows the identity rules in
+  `02-data-model.md`.
 
 ---
 
@@ -385,19 +406,38 @@ namespace `#type/* → rdf:type`, or map `#k/v → k:: v`). Off by default.
 
 ---
 
-## 8. Normalization & precedence (resolving synonymy)
+## 8. Normalization, deduplication & conflict handling
 
-The same fact can be stated ≥3 ways (template `type::`, `#type/x` tag, an inline
-`((a)) [[Class]]`). All MUST normalize to one canonical triple. Proposed
-precedence for typing, highest first:
+Every authoring form (§3–§6) lowers to canonical quads `(s, p, o, g)`. This
+section defines what happens when the **same** or **conflicting** facts arrive
+from different syntaxes.
 
-1. Explicit `type::` / frontmatter `type` (template output).
-2. Inline `(( ))` type statement.
-3. Promoted tag namespace (`#type/*`).
-4. Inferred (none — never invent a type).
+**Canonicalize → dedupe.** All forms normalize to quads; **identical** quads
+collapse to one, but provenance **retains every source span** (so the UI can show
+"asserted in 3 places"). This is the common case and needs no precedence.
 
-Duplicate triples from multiple sources collapse to one, but **provenance keeps
-all source spans** so the UI can show "asserted in 3 places."
+**Multi-valued by default.** RDF predicates are multi-valued: distinct objects for
+the same `(s, p)` are **all kept** — they are not competitors. In particular
+**`rdf:type` is multi-valued** — a subject may be `[[Person]]` *and* `[[Agent]]`,
+and we assert both.
+> *Correction from v0.1:* the old "typing precedence, highest wins" was **wrong** —
+> it discarded valid types. Typing is multi-valued; there is no winner to pick.
+
+**Functional predicates → conflict = warning, never a silent drop.** A
+predicate-note MAY declare itself **functional** (single-valued, e.g. `born`). If
+distinct values then arrive for the same subject, that is a genuine
+*contradiction*: surface a **validation warning** (§5) listing all sources. An
+optional, documented **tie-break** MAY mark a "primary" for display but MUST NOT
+discard the others. Default tie-break, highest first:
+1. Explicit inline field `p:: …` / frontmatter `p:`.
+2. Inline `(( ))` / three-link statement.
+3. Tag-derived — **only if** promotion is enabled (§7.2); always lowest.
+
+**Predicate/label synonymy is a vocabulary concern, not this section's.** Whether
+`author::` and `((creator))` denote the *same* predicate is decided by the
+vocabulary layer — predicate-notes sharing an IRI/CURIE or declaring
+`owl:equivalentProperty` (§6, `02-data-model.md`). §8 dedupes/handles quads only
+*after* predicates have resolved to IRIs.
 
 ---
 
@@ -460,9 +500,19 @@ Decided:
   like wikilinks. Bridges the vault to the global Linked Data web. (§4.1.2, v0.2)
 - **Tags left alone; no triples by default.** Dedicated SKOS layer + UI is a
   planned later phase, separate from `#tags`. (§7)
+- **Frontmatter hygiene.** Not every key is a triple: a reserved-key denylist
+  (`tags`, `aliases`, `cssclasses`, `publish`, `permalink`, `created`/`updated`,
+  tool-owned blocks) is ignored by default; `type`/`a` is the reserved typing
+  key; CURIE keys allowed; one shared datatype-inference path. (§3.1, v0.2)
+- **§8 corrected — typing is multi-valued.** Dedupe identical quads (keep
+  provenance); keep all distinct objects; `rdf:type` may have several values (no
+  precedence winner). Conflicts only exist on **declared-functional** predicates →
+  warning + optional tie-break, never a silent drop. Predicate synonymy is a
+  vocabulary-layer concern, not §8. (§8, v0.2 — fixes a v0.1 correctness bug)
 
 Still open:
-1. Literal datatype inference aggressiveness. (§3)
+1. Literal datatype inference aggressiveness — and confirm comma-splitting for
+   inline `::` fields (`field:: [[A]], [[B]]`). (§3, §3.1)
 2. Accept raw ` ```turtle ` blocks in addition to ` ```triple `. (§4.3)
 3. Validation strictness (advisory vs blocking) and SHACL emission. (§5)
 4. Whether predicate/class notes live in reserved folders or are found by a
