@@ -104,8 +104,8 @@ Ready** (§6). This is the design work we are doing now.
       (draft v0.1)
 - [ ] `spec/02-data-model.md` — IRI/identity, Markdown→RDF mapping, SQLite schema
 - [ ] `spec/03-ldp-http.md` — LDP resources/containers/verbs/conformance target
-- [ ] Resolve the four **blocking decisions** (§7): stack, IRI scheme, identity
-      default, LDP conformance target
+- [~] **Blocking decisions** (§7): IRI scheme, identity default, CURIEs **closed**;
+      remaining — stack/monorepo confirm, LDP conformance target
 - [ ] Repo scaffolding decisions recorded (monorepo layout, test-vault strategy)
 - [ ] **Spec-review gate:** full read-through against the Definition of Ready →
       declare **spec-complete for the core** before any Phase 2 code
@@ -231,7 +231,7 @@ Deferrable (from `spec/01`):
 |-----|---------|--------|
 | `PLAN.md` | This roadmap | living |
 | `spec/00-vision.md` | Anchor: why + architecture + decisions | draft v0.1 |
-| `spec/01-triple-authoring-syntax.md` | Human authoring surface | draft v0.1 |
+| `spec/01-triple-authoring-syntax.md` | Human authoring surface | **draft v0.2** (scrutinized) |
 | `spec/02-data-model.md` | IRI/identity, RDF mapping, SQLite schema | to write |
 | `spec/03-ldp-http.md` | LDP resources/containers/verbs/conformance | to write |
 | `spec/adr/` | Architecture Decision Records | as needed |
@@ -239,6 +239,30 @@ Deferrable (from `spec/01`):
 ---
 
 ## 9. Changelog
+
+- **2026-08-04 (eve) — ▶ RESUME HERE.**
+  - **Where we left off:** `spec/01` is at **v0.2**, fully scrutinized
+    (writability, narrative-blend, Layer A frontmatter hygiene, §8 correctness).
+    `spec/00` + this plan reconciled to match. Three blocking decisions **closed**
+    (IRI scheme, identity default, CURIEs); **Human-first, RDF-hidden** recorded
+    as the tie-breaking north-star principle.
+  - **Next best step:** write **`spec/02-data-model.md`** — the last Phase-1 spec
+    gating any code. Everything just decided feeds it: relative-IRI identity +
+    configurable base, the vault **prefix-map** (CURIEs), external IRIs, key/predicate
+    slugging, datatype inference, and dedupe/provenance **quads** `(s,p,o,g)`.
+    Writing it will also force-close several small `[DECIDE]`s in their natural
+    home (see `spec/01` §10 "Still open").
+  - **Also open (not blocking `spec/02`):** confirm stack/monorepo; LDP conformance
+    target; **product name** — `spec/00`/`PLAN` still say *my-ldp* but the repo is
+    *markdown-ldp*; pick one.
+  - **Two `spec/01` bugs fixed this session:** frontmatter now has a reserved-key
+    denylist (was minting config like `tags`/`cssclasses` as triples); `rdf:type`
+    is multi-valued (the old "typing precedence, highest wins" wrongly discarded
+    valid types).
+  - **Authoring decisions locked this session:** blend model = both-layered;
+    keep `(( ))` + implicit-subject `::` + three-link shorthand; maturity ladder
+    M1→M2→M3 (build M1 first); statement-metadata token `~( … )`; external
+    Markdown links are IRIs; `triple`/Turtle blocks are a power-user layer.
 
 - **2026-08-04** — Adopted a **quad store / named graphs**; granularity closed:
   **note-as-graph**, vault = dataset + IRI base. Ripples: store is `(s,p,o,g)`;

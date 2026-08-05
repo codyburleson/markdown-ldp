@@ -82,7 +82,7 @@ interop credibility. The *end* is a trustworthy, queryable, AI-legible graph.
 - **Dataset** — the **vault** is the dataset and the IRI base that namespaces
   all graph names. The "vault graph" is the union of all note-graphs.
 - **Provenance** — two levels: the **graph name** (which note asserted it) and
-  **RDF-star `(...)`** annotations (per-statement confidence, citation, etc.),
+  **RDF-star `~( … )`** annotations (per-statement confidence, citation, etc.),
   plus `(file, line, span)` back-references for every quad.
 
 ## 5. Architecture
@@ -134,9 +134,11 @@ libraries TBD (N3.js / rdf-ext; Comunica if/when SPARQL).
 - **Specs are gated.** Design precedes build; specs are reviewed before and
   reconciled after each build stage (`PLAN.md` §5).
 
-**Open (blocking Phase 1):** IRI base-namespace scheme; identity default
-(path/name vs stable `id:`); stack/monorepo confirmation; LDP conformance
-target. See `PLAN.md` §7.
+**Closed since:** IRI scheme (configurable base, `https://` default, stored
+vault-relative); identity default (name/path derived, stable `id:` wins, tool
+mints ids); CURIEs (vocabulary + serialization via a vault prefix-map note — not
+identity). **Still open (blocking Phase 1):** stack/monorepo confirmation; LDP
+conformance target. Full log in `PLAN.md` §7.
 
 ## 8. Map of specs
 
