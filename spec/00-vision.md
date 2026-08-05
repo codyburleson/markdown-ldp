@@ -47,6 +47,13 @@ interop credibility. The *end* is a trustworthy, queryable, AI-legible graph.
 ## 3. Goals & non-goals
 
 **Goals**
+- **Human-first, RDF-hidden.** Maximum readability and writability in ordinary
+  Markdown. A layman must be able to author and read meaningful links **without
+  understanding RDF, IRIs, CURIEs, or Linked Data theory.** Notes should look
+  like notes — `[[Einstein]] ((developed)) [[Relativity]]`, not
+  `<urn:…> dct:creator <…> .`. The RDF/LDP machinery is a substrate the tool
+  manages; it is never a literacy tax on the author. (Counter-example we reject:
+  syntaxes that surface raw IRIs/prefixes and read like gobbledygook.)
 - Formal, human-writable S–P–O authoring inside ordinary Markdown.
 - A rebuildable RDF **quad store** with per-statement and per-document provenance.
 - A **schema that lives in the vault** (class-notes, predicate-notes; templates
@@ -112,6 +119,12 @@ libraries TBD (N3.js / rdf-ext; Comunica if/when SPARQL).
 
 ## 7. Key decisions (rationale; full log in `PLAN.md`)
 
+- **Human-first, RDF-hidden (design north star).** Every syntax and default is
+  chosen for a layman writer, not an RDF expert. Full IRIs and CURIEs are an
+  *optional* power-user layer; the common path uses note names and plain-word
+  predicates. This principle **breaks ties** across the whole design (see §3
+  Goals) and directly shapes identity (prefer names over minted IDs) and CURIEs
+  (a convenience the tool hides, never a requirement).
 - **Library-first.** One reusable semantic core; every face is a thin adapter.
 - **Quad store, note-as-graph.** Named graphs are first-class; the graph name
   doubles as authorship provenance and aligns 1:1 with LDP resources.

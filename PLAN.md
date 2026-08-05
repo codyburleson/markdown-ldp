@@ -32,6 +32,14 @@ North-star scenario:
 
 ## 2. Principles & locked decisions
 
+- **Human-first, RDF-hidden (north-star principle; breaks ties).** We strive for
+  maximum readability, writability, and ease of use in plain Markdown. Authors
+  must be able to write and read meaningful links **without understanding RDF,
+  IRIs, CURIEs, or Linked Data concepts.** Notes look like notes; the RDF/LDP
+  machinery is a managed substrate, never a literacy tax. Full IRIs/CURIEs are an
+  optional power-user layer. When two designs conflict, the more layman-friendly
+  one wins. (We explicitly reject "looks like gobbledygook" syntaxes that surface
+  raw IRIs/prefixes.)
 - **Markdown is the source of truth.** SQLite is a derived, rebuildable index —
   never authoritative.
 - **Quads, not triples — named graphs are first-class.** The store is a **quad
@@ -182,21 +190,34 @@ A spec is "ready to build from" when:
 
 Blocking (close during Phase 1):
 - [ ] Confirm stack: TypeScript/Node + yarn; monorepo tool (workspaces? turbo?).
-- [ ] IRI base namespace scheme (`https://…` vs opaque `urn:` vs `vault:`).
-- [ ] Identity default: path/name resolution vs required stable `id:`.
 - [ ] LDP conformance target: full W3C LDP 1.0 vs "LDP-inspired."
 
 Closed:
+- [x] **IRI base scheme → configurable base, `https://` default, stored
+      relative.** Note identity is a **vault-relative reference** resolved
+      against a configurable base IRI only at the edges (serialization, LDP);
+      `https://` default keeps the LDP face a no-op translation and gives free
+      relocatability. Unconfigured base → reserved placeholder
+      `https://vault.local/` (never blocks an offline layman; power users
+      override). Rejected `urn:`/`vault:` (not LDP-native, poor CURIE ergonomics).
+      (2026-08-04)
+- [x] **Identity default → name/path derived; stable `id:` wins when present.**
+      Default IRI derives from a normalized vault-unique note name/path; a
+      frontmatter `id:` overrides and makes identity rename-proof. **The tool
+      mints ids, never the human** — minted silently when a note is promoted to
+      a predicate/class or an anchor is needed. Aligns with Obsidian's
+      link-by-name + auto-rename and with Human-first (§2). (2026-08-04)
+- [x] **CURIEs → adopted for vocabulary + serialization, NOT as identity.** A
+      vault **prefix-map note** (`dct:`, `schema:`, `rdfs:`, `skos:`, + the
+      vault's own prefix) drives predicate/class resolution, note-IRI
+      abbreviation, and Turtle `@base` — one map, three jobs. CURIEs are a
+      tool-hidden convenience (author writes `((developed))`, not `schema:…`);
+      full IRIs/CURIEs are an opt-in power-user layer (progressive disclosure).
+      (2026-08-04)
 - [x] **Named-graph granularity → note-as-graph.** Vault = dataset/IRI-base.
       (2026-08-04)
 
 Deferrable (from `spec/01`):
-- [ ] **Investigate CURIEs that map to IRIs** — evaluate compact URIs (prefix:local)
-      as the authoring/serialization shorthand for predicates, classes, and
-      namespaces (e.g. `dct:creator`, `schema:author`). Efficacy questions:
-      readability vs. full IRIs, prefix-registry location (a vault note? config?),
-      collision/ambiguity handling, round-trip to full IRIs, and interplay with
-      predicate-notes. Land conclusions in `spec/02-data-model.md`.
 - [ ] Literal datatype inference aggressiveness.
 - [ ] Accept raw ` ```turtle ` blocks alongside ` ```triple `.
 - [ ] Validation strictness (advisory vs blocking) + SHACL emission.
