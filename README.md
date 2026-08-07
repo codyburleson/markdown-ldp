@@ -29,8 +29,8 @@ AI-legible graph.
 - Authoring: frontmatter + `key:: value` fields, inline
   `[[Subject]] ((predicate)) [[Object]]` statements, and ` ```triple ` blocks,
   with RDF-star `(...)` for per-statement provenance.
-- Markdown is the **source of truth**; a **SQLite quad store** is a derived,
-  rebuildable index.
+- Markdown is the **source of truth**; the **quad store** is a derived,
+  rebuildable index (backend still open — see `spec/adr/0001-quad-store-backend.md`).
 - One reusable **TypeScript core**, three thin faces: an **LDP HTTP server**, an
   **Obsidian plugin**, and an **MCP server** (the AI-facing payoff).
 

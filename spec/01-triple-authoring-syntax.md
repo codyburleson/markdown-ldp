@@ -32,7 +32,7 @@ identity), `03-ldp-http.md`, ADRs.
    the formal type system.
 5. Preserve **provenance**: every triple traces back to `(file, line, span)`.
 
-Non-goals (this doc): the RDF/IRI minting rules, the SQLite index, the HTTP
+Non-goals (this doc): the RDF/IRI minting rules, the quad-store index, the HTTP
 surface. Those live in `02-data-model.md`+.
 
 ---

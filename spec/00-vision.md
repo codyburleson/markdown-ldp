@@ -21,7 +21,7 @@ inference, because there is no structured graph to reason over.
 
 ## 2. What we're building
 
-**my-ldp turns a Markdown knowledge base into a real, typed, provenance-bearing
+**markdown-ldp turns a Markdown knowledge base into a real, typed, provenance-bearing
 knowledge graph** — while keeping the Markdown human-first and portable.
 
 Authors keep writing notes, but gain the ability to write **formal
@@ -89,20 +89,33 @@ interop credibility. The *end* is a trustworthy, queryable, AI-legible graph.
 
 ```
 Layer 0  Mapping rules: Markdown constructs  ⇄  RDF quads     (tool-agnostic)
-Layer 1  Parser + incremental indexer          → SQLite quad store (+ provenance)
+Layer 1  Parser + incremental indexer          → quad store (+ provenance)   [backend OPEN: ADR-0001]
 Layer 2  Query engine (lightweight → SPARQL over time)
-Layer 3  Faces — thin adapters over Layers 0–2:
+Layer 3  Faces — thin CLIENTS of the core; none owns an index:
+         ├─ MCP server       → AI face: query + cite the graph      ← primary
+         ├─ CLI              → headless index/query, no editor      ← primary
          ├─ LDP HTTP server  → interop face (note ↔ LDP-RS; folder ↔ container)
-         ├─ Obsidian plugin  → authoring, predicate autocomplete, graph views
-         └─ MCP server       → AI face: query + cite the graph for an assistant
+         └─ Obsidian plugin  → authoring, predicate autocomplete, graph views
 ```
+
+**The core owns the store; every face is a client of it.** The core runs
+headless (library, plus an optional local daemon) and watches the **filesystem**
+— never an editor's event API — so a vault edited by an AI agent, a CLI, or any
+Markdown tool indexes identically. Obsidian is one optional client dialect, not
+the platform.
 
 **Source of truth is Markdown; the quad store is a derived, rebuildable index.**
 On a file change, we **drop and replace that note's graph** — the named-graph
-model makes updates atomic per note, with no stale-quad diffing.
+model makes updates atomic per note, with no stale-quad diffing. Because the
+store is a *cache*, the backend is swappable behind a `QuadStore` port.
+
+**Store backend is an OPEN decision — see `spec/adr/0001-quad-store-backend.md`.**
+Earlier drafts stated "SQLite" as settled; it never was. Candidates (SQLite,
+Oxigraph, pure-JS quadstore, in-memory) are gated on a benchmark, and `spec/02`
+is written storage-agnostic so the data model does not depend on the outcome.
 
 **Stack (assumed; confirm):** TypeScript / Node, yarn, dependency-light. RDF
-libraries TBD (N3.js / rdf-ext; Comunica if/when SPARQL).
+libraries TBD (N3.js / rdf-ext; Comunica or Oxigraph if/when SPARQL).
 
 ## 6. The three faces (and why MCP matters most)
 
@@ -112,10 +125,12 @@ libraries TBD (N3.js / rdf-ext; Comunica if/when SPARQL).
   resources turn out to be *the same idea seen from two sides*.
 - **Obsidian plugin** — the authoring face. Predicate autocomplete backed by
   predicate-notes, inline rendering of `(( ))` statements, live graph views.
-- **MCP server** — the AI face, and arguably the real product. Instead of an
+- **MCP server (+ CLI)** — the AI face, and **the real product**. Instead of an
   assistant grepping fuzzy text, it traverses a typed graph and cites which note
   asserted each fact with what confidence. This is the payoff the whole design
-  is built to deliver.
+  is built to deliver — and it is the face that must work when the user has *no
+  Markdown client at all*, just a folder and an assistant. Design for that user
+  first; the plugin is a convenience layered on top.
 
 ## 7. Key decisions (rationale; full log in `PLAN.md`)
 
@@ -138,7 +153,8 @@ libraries TBD (N3.js / rdf-ext; Comunica if/when SPARQL).
 vault-relative); identity default (name/path derived, stable `id:` wins, tool
 mints ids); CURIEs (vocabulary + serialization via a vault prefix-map note — not
 identity). **Still open (blocking Phase 1):** stack/monorepo confirmation; LDP
-conformance target. Full log in `PLAN.md` §7.
+conformance target. **Open, gated on benchmark (blocks Phase 3, not Phase 1):**
+quad store backend — ADR-0001. Full log in `PLAN.md` §7.
 
 ## 8. Map of specs
 
@@ -147,6 +163,7 @@ conformance target. Full log in `PLAN.md` §7.
 | `PLAN.md` | Roadmap, phases, spec-review gate, decision log |
 | `spec/00-vision.md` | *This doc* — why, what, architecture, faces |
 | `spec/01-triple-authoring-syntax.md` | Human authoring surface |
-| `spec/02-data-model.md` | IRIs/identity, Markdown→RDF-quads mapping, SQLite schema |
+| `spec/02-data-model.md` | IRIs/identity, Markdown→RDF-quads mapping, `QuadStore` port (storage-agnostic) |
 | `spec/03-ldp-http.md` | LDP resources/containers/verbs, conformance target |
-| `spec/adr/` | Architecture Decision Records |
+| `spec/04-index-store.md` | Physical store schema + indexer (written after ADR-0001 closes) |
+| `spec/adr/0001-quad-store-backend.md` | **OPEN** — which quad store backend, and its documented limits |

@@ -1,4 +1,4 @@
-# my-ldp — Project Plan
+# markdown-ldp — Project Plan
 
 A living plan. Update it as decisions land and phases complete. Newest status at
 the top of the Changelog (§9).
@@ -40,8 +40,11 @@ North-star scenario:
   optional power-user layer. When two designs conflict, the more layman-friendly
   one wins. (We explicitly reject "looks like gobbledygook" syntaxes that surface
   raw IRIs/prefixes.)
-- **Markdown is the source of truth.** SQLite is a derived, rebuildable index —
-  never authoritative.
+- **Markdown is the source of truth.** The quad store is a derived, rebuildable
+  index — never authoritative. Because it is a *cache*, the backend is swappable
+  behind a `QuadStore` port and **which backend is still an open decision**
+  (`spec/adr/0001-quad-store-backend.md`) — SQLite was an inherited assumption,
+  never a decision.
 - **Quads, not triples — named graphs are first-class.** The store is a **quad
   store** `(s, p, o, g)`. **Each note is a named graph** (named by its IRI); the
   **vault is the dataset** (identity + IRI base). Consequences: maps 1:1 to LDP
@@ -74,13 +77,17 @@ Authoring syntax (locked; see `spec/01-triple-authoring-syntax.md`):
 
 ```
 Layer 0  Mapping spec: Markdown constructs  ⇄  RDF        (tool-agnostic core rules)
-Layer 1  Parser + incremental indexer        → SQLite quad store (+ provenance)
+Layer 1  Parser + incremental indexer        → quad store (+ provenance)  [backend OPEN: ADR-0001]
 Layer 2  Query engine (start lightweight; grow toward SPARQL)
-Layer 3  Faces (thin adapters over Layers 0–2):
+Layer 3  Faces — thin CLIENTS of the core; none owns an index (§2):
+         ├─ MCP server       → the AI face: expose the graph to Claude   ← primary
+         ├─ CLI              → headless index/query, no editor required  ← primary
          ├─ LDP HTTP server  → external / interop face (W3C LDP)
-         ├─ Obsidian plugin  → authoring + live graph views + predicate autocomplete
-         └─ MCP server       → the AI face: expose the graph to Claude
+         └─ Obsidian plugin  → authoring + live graph views + predicate autocomplete
 ```
+
+The core runs **headless** and watches the **filesystem**, so a vault edited by
+an AI agent, a CLI, or any Markdown editor indexes identically.
 
 Stack (assumed; confirm): **TypeScript / Node**, yarn. RDF libs TBD
 (candidates: N3.js, rdf-ext; Comunica if/when SPARQL). Dependency-light bias.
@@ -102,8 +109,11 @@ Ready** (§6). This is the design work we are doing now.
 - [x] `PLAN.md` — this roadmap (living)
 - [x] `spec/00-vision.md` — anchor: why, architecture, faces, decision log
       (draft v0.1)
-- [ ] `spec/02-data-model.md` — IRI/identity, Markdown→RDF mapping, SQLite schema
+- [ ] `spec/02-data-model.md` — IRI/identity, Markdown→RDF mapping, `QuadStore`
+      port. **Storage-agnostic** — no physical schema (see ADR-0001)
 - [ ] `spec/03-ldp-http.md` — LDP resources/containers/verbs/conformance target
+- [x] `spec/adr/0001-quad-store-backend.md` — backend question **opened** and
+      framed; requirements R1–R8, scale envelope, candidates, benchmark gate
 - [~] **Blocking decisions** (§7): IRI scheme, identity default, CURIEs **closed**;
       remaining — stack/monorepo confirm, LDP conformance target
 - [ ] Repo scaffolding decisions recorded (monorepo layout, test-vault strategy)
@@ -118,15 +128,23 @@ closed; a person could implement Phase 2 from the docs alone.
 - [ ] Markdown parser → AST (frontmatter, inline fields, `(( ))`, `triple` blocks)
 - [ ] Mapping engine: AST → canonical triples
 - [ ] IRI minting + identity resolution (path/name + optional stable `id:`)
-- [ ] In-memory graph model + provenance records
+- [ ] **`QuadStore` port** + in-memory reference implementation + provenance records
 - [ ] Golden-file tests: fixture notes → expected Turtle
+- [ ] **Synthetic vault generator** (1k/10k/50k notes × light/typical/dense) —
+      feeds the ADR-0001 benchmark
 - Exit: reconcile `spec/02` to the implementation; log deltas.
 
 ### Phase 3 — Index & query
-- Entry: spec the SQLite schema + query surface (extend `spec/02` or new doc).
-- [ ] SQLite quad store schema (+ provenance table)
-- [ ] Incremental indexer: file change → re-parse → diff → upsert; watch mode
+- Entry: **close ADR-0001** — run the §6 benchmark against candidates (SQLite,
+  Oxigraph, in-memory), settle "does the Obsidian plugin own a store?", then
+  write `spec/04-index-store.md` with the chosen physical schema **and a
+  published scale envelope** (tested vault sizes + the point where we tell the
+  user "beyond here, use X"). No store code before the ADR closes.
+- [ ] Persistent `QuadStore` implementation on the chosen backend (+ provenance)
+- [ ] Incremental indexer: **filesystem** change → re-parse → drop-and-replace
+      graph; watch mode. No editor-specific event source.
 - [ ] Query layer v1 (pattern/graph queries); SPARQL later
+- [ ] Scale-envelope numbers documented in `spec/04` and surfaced in the README
 - Exit: reconcile spec; log deltas.
 
 ### Phase 4 — Schema & validation
@@ -139,7 +157,8 @@ closed; a person could implement Phase 2 from the docs alone.
 
 ### Phase 5 — Faces
 - Entry: `spec/03-ldp-http.md` finalized; MCP + plugin surface specs drafted.
-- [ ] **MCP server** over the graph (query + cite) — likely highest value first
+- [ ] **MCP server** over the graph (query + cite) — **the primary face**
+- [ ] **CLI**: index / query / dump a folder headlessly, no editor involved
 - [ ] **LDP HTTP server**: resources/containers, content negotiation, read path
 - [ ] LDP write path (PUT/POST/PATCH) + Markdown round-trip strategy
 - [ ] **Obsidian plugin**: predicate autocomplete, statement rendering, graph view
@@ -191,6 +210,19 @@ A spec is "ready to build from" when:
 Blocking (close during Phase 1):
 - [ ] Confirm stack: TypeScript/Node + yarn; monorepo tool (workspaces? turbo?).
 - [ ] LDP conformance target: full W3C LDP 1.0 vs "LDP-inspired."
+- [ ] **Product name** — repo is *markdown-ldp*; docs now say the same. Confirm.
+
+Blocking Phase 3 (benchmark-gated, does **not** block Phase 1 or 2):
+- [ ] **Quad store backend** — `spec/adr/0001-quad-store-backend.md`. SQLite was
+      an inherited assumption, not a decision. Analysis so far: **scale is not
+      the risk** (SQLite covers ~10M quads; a large vault is ~1–2M). The real
+      risks are (a) SPARQL is a multi-month build on a hand-rolled SQL schema
+      and (b) RDF-star terms are fiddly in SQL. *(The Electron/native-module risk
+      is retired — the plugin no longer embeds a store.)* Now a two-horse race:
+      **SQLite** (control, FTS5, SQL escape hatch, plain-table provenance) vs.
+      **Oxigraph** (SPARQL 1.1 + RDF-star free, provenance modeled as quads, no
+      escape hatch). Closes on measured numbers, not argument.
+- [ ] Client↔core transport (in-process / local HTTP / IPC). Small; not gating.
 
 Closed:
 - [x] **IRI base scheme → configurable base, `https://` default, stored
@@ -207,6 +239,17 @@ Closed:
       mints ids, never the human** — minted silently when a note is promoted to
       a predicate/class or an anchor is needed. Aligns with Obsidian's
       link-by-name + auto-rename and with Human-first (§2). (2026-08-04)
+- [x] **The core owns the store; clients query it. No client embeds an index.**
+      Obsidian is **one optional client dialect**, not the platform — users may
+      use other Markdown tools, and the near-term trajectory is a user working a
+      plain folder **entirely through an AI, with no Markdown client at all**. A
+      face that may not exist cannot dictate the storage engine. Consequences:
+      the core MUST run **headless** (library + optional local daemon); the
+      watcher MUST be **filesystem-level, never Obsidian's event API** (AI
+      agents, CLIs, and sync clients all write files); the plugin is a **thin
+      client** over the same interface MCP and HTTP use; **MCP + CLI are the
+      primary faces**. Also retires the Electron-native-module constraint, so
+      SQLite *and* Oxigraph re-open for ADR-0001. (2026-08-07)
 - [x] **CURIEs → adopted for vocabulary + serialization, NOT as identity.** A
       vault **prefix-map note** (`dct:`, `schema:`, `rdfs:`, `skos:`, + the
       vault's own prefix) drives predicate/class resolution, note-IRI
@@ -232,15 +275,45 @@ Deferrable (from `spec/01`):
 | `PLAN.md` | This roadmap | living |
 | `spec/00-vision.md` | Anchor: why + architecture + decisions | draft v0.1 |
 | `spec/01-triple-authoring-syntax.md` | Human authoring surface | **draft v0.2** (scrutinized) |
-| `spec/02-data-model.md` | IRI/identity, RDF mapping, SQLite schema | to write |
+| `spec/02-data-model.md` | IRI/identity, RDF mapping, `QuadStore` port (storage-agnostic) | to write ← **next** |
 | `spec/03-ldp-http.md` | LDP resources/containers/verbs/conformance | to write |
-| `spec/adr/` | Architecture Decision Records | as needed |
+| `spec/04-index-store.md` | Physical store schema, indexer, scale envelope | after ADR-0001 |
+| `spec/adr/0001-quad-store-backend.md` | Which quad store backend + its limits | **OPEN** (benchmark-gated) |
 
 ---
 
 ## 9. Changelog
 
-- **2026-08-04 (eve) — ▶ RESUME HERE.**
+- **2026-08-07 — ▶ RESUME HERE. Store backend re-opened; `spec/02` is next.**
+  - **SQLite was never decided** — it was an assumption inherited from the first
+    sketch and had hardened into prose across `spec/00`, `PLAN`, and `README`.
+    Re-opened as **ADR-0001** and struck from all three as settled fact.
+  - **The scale worry resolves, but the framing changes.** Estimated envelope:
+    a serious vault is ~10k–300k quads, a large one ~1–2M, ~10M only under bulk
+    import. SQLite handles that comfortably (~250 MB at 1M quads with covering
+    indexes). **Capacity is not the risk.** The real risks are SPARQL build cost
+    on a hand-rolled schema, native-SQLite vs. the Obsidian plugin, and RDF-star
+    terms in SQL. Recorded with requirements R1–R8 and five candidates.
+  - **Decision is benchmark-gated, not argument-gated** (ADR-0001 §6): synthetic
+    vault generator → measure index/re-index/query/startup per candidate →
+    **publish a scale envelope with the tested limits.** Stated limits are a
+    deliverable.
+  - **Mitigation now, so the question can't block us:** a `QuadStore` port lands
+    in Phase 2 with an in-memory reference implementation; `spec/02` is written
+    **storage-agnostic**; physical schema moves to a new `spec/04-index-store.md`
+    written after the ADR closes. Phase 1 and 2 are unblocked.
+  - **New locked decision — the core owns the store; clients query it.** Obsidian
+    is one optional client dialect, not the platform; the near-term user works a
+    plain folder **entirely through an AI, with no Markdown client at all**. So:
+    core runs **headless**, watcher is **filesystem-level** (never Obsidian's
+    event API), plugin is a thin client, **MCP + CLI are the primary faces**
+    (CLI added to Phase 5). This also retires the Electron-native-module
+    constraint — SQLite *and* Oxigraph are back in contention, and ADR-0001
+    reduces to **A vs. B on the benchmark**.
+  - **Next best step (unchanged, now safe to take):** write `spec/02-data-model.md`.
+  - Product name settled to **markdown-ldp** across docs.
+
+- **2026-08-04 (eve)**
   - **Where we left off:** `spec/01` is at **v0.2**, fully scrutinized
     (writability, narrative-blend, Layer A frontmatter hygiene, §8 correctness).
     `spec/00` + this plan reconciled to match. Three blocking decisions **closed**
