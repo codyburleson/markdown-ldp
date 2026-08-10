@@ -78,7 +78,15 @@ Authoring syntax (locked; see `spec/01-triple-authoring-syntax.md`):
 - Note-as-subject via frontmatter + `key:: value` inline fields.
 - Inline statements via `[[S]] ((predicate)) [[O]]`.
 - Bulk via ` ```triple ` blocks (Turtle-flavored).
-- Statement-level metadata via trailing `(...)` → RDF-star.
+- Statement-level metadata via a trailing **`~( … )`** → RDF-star. (The token is
+  tilde-marked so it can never be confused with a prose aside; `spec/01` §4.2.)
+
+Data model (locked; see `spec/02-data-model.md` v0.2):
+- **Identity is always vault-local.** External identity is a `sameAs:`
+  *assertion*, never an `id:`.
+- **Vocabulary is stored as ordinary quads** in each predicate-note's own graph,
+  so it exports and materializes like everything else (ADR-0002).
+- **Quad identity is a canonical serialization** (ADR-0003).
 
 ---
 
@@ -121,16 +129,24 @@ Ready** (§6). This is the design work we are doing now.
 - [x] `spec/00-vision.md` — anchor: why, architecture, faces, decision log
       (draft v0.1)
 - [x] `spec/02-data-model.md` — IRI/identity, the **vocabulary layer**,
-      Markdown→RDF mapping, provenance, `QuadStore` port (draft v0.1).
-      **Storage-agnostic** — no physical schema (see ADR-0001)
+      Markdown→RDF mapping, provenance, `QuadStore` port (**draft v0.2**,
+      scrutinized). **Storage-agnostic** — no physical schema (see ADR-0001)
 - [ ] `spec/03-ldp-http.md` — LDP resources/containers/verbs/conformance target
 - [x] `spec/adr/0001-quad-store-backend.md` — backend question **opened** and
       framed; requirements R1–R8, scale envelope, candidates, benchmark gate
+- [x] `spec/adr/0002-vocabulary-storage.md` — where alignments live and how the
+      query layer reads them (**leaning**: real quads + derived index)
+- [x] `spec/adr/0003-canonical-term-and-quad-identity.md` — quad equality,
+      provenance keying, golden-file stability (**leaning**: canonical string)
+- [x] `spec/adr/0004-domain-range-semantics.md` — constraint vs. RDFS inference
+      (**leaning**: keep the names, emit `mldp:`)
 - [~] **Blocking decisions** (§7): IRI scheme, identity default, CURIEs **closed**;
       remaining — stack/monorepo confirm, LDP conformance target
 - [ ] Repo scaffolding decisions recorded (monorepo layout, test-vault strategy)
 - [ ] **Spec-review gate:** full read-through against the Definition of Ready →
       declare **spec-complete for the core** before any Phase 2 code
+      *(`spec/02` has had its scrutiny pass — 2026-08-10; `spec/00` and `spec/03`
+      remain, and the gate cannot be declared until `spec/03` exists)*
 
 *Exit criterion:* specs 00–02 pass the Definition of Ready; blocking decisions
 closed; a person could implement Phase 2 from the docs alone.
@@ -231,7 +247,27 @@ Blocking (close during Phase 1):
 - [ ] LDP conformance target: full W3C LDP 1.0 vs "LDP-inspired."
 - [ ] **Product name** — repo is *markdown-ldp*; docs now say the same. Confirm.
 
-Leaning, safe to spec and build against (formal close at Phase 3 exit):
+Leaning, safe to spec and build against:
+- [~] **Vocabulary storage → alignments lower to real quads** in the
+      predicate-note's own graph, with a derived in-memory index above the port
+      — `spec/adr/0002-vocabulary-storage.md`. Standard terms
+      (`rdfs:subPropertyOf`, `owl:inverseOf`) where the entailment is sound;
+      vault-local `mldp:` where RDF has no word (the inverted alignment). Decided
+      on **export and interop**: an alignment held only in loader memory is
+      invisible to `GET /predicates/…` and to the R5b SPARQL hatch, which is a
+      graph that means one thing inside this tool and something weaker
+      everywhere else. *Closes at Phase 3 entry, on the §6 prototype.*
+- [~] **Quad identity → canonical N-Quads-flavored serialization** —
+      `spec/adr/0003-canonical-term-and-quad-identity.md`. Stored-relative IRIs
+      (so a rebase does not change identity), explicit datatypes, NFC, recursing
+      into quoted triples. `replaceGraph` restructured to pair each quad with its
+      occurrences, which removes the need for keying on the write path entirely.
+      *Closes at Phase 2 exit, on golden files.*
+- [~] **`domain`/`range` → keep the names, emit `mldp:`** —
+      `spec/adr/0004-domain-range-semantics.md`. They are constraints, and RDFS
+      gives those names to *inference rules* — emitting `rdfs:domain` would
+      license a reasoner to conclude types the vault never asserted, silently, at
+      the R5b and LDP boundaries. *Revisit at Phase 4 with SHACL.*
 - [~] **Quad store backend → SQLite** — `spec/adr/0001-quad-store-backend.md`.
       Neither scale nor speed decided it (both are non-issues; speed is
       invisible behind an LLM tool call). **R3 and R8 decided it**: provenance as
@@ -241,6 +277,42 @@ Leaning, safe to spec and build against (formal close at Phase 3 exit):
       that had opposed it (SPARQL build cost) **dissolved** once R5 was split.
       Remaining gate is measurement + a published scale envelope, not a choice.
 - [ ] Client↔core transport (in-process / local HTTP / IPC). Small; not gating.
+
+Closed — `spec/02` scrutiny pass (2026-08-10):
+- [x] **Identity is always vault-local.** `id:` MUST be a bare token; an absolute
+      URI is a validation error. External identity is expressed as `sameAs:` →
+      `owl:sameAs`, an *assertion* in the authoring note's graph. The v0.1
+      absolute-URI branch was never a logged decision and contradicted four rules
+      at once (relative storage, vault-as-dataset, decodability, tool-mints-ids),
+      besides making the LDP face unable to serve the note — you cannot `GET` an
+      IRI you don't control. A note *about* Einstein is a document, not the
+      person.
+- [x] **Reversibility is scoped to path-derived IRIs.** The LDP face MUST resolve
+      through an IRI ⇄ path map, not by decoding. The unconditional v0.1 rule was
+      already false for `⟨base⟩id/⟨token⟩` — i.e. for **every predicate-note**,
+      since §3.3 mandates minting an id for them.
+- [x] **Predicate resolution is one function for all authoring forms.** §3.5's
+      link/dangling rules govern subject and object positions only. In v0.1 an
+      undefined predicate resolved differently under `((developed))` than under
+      the three-link form — the same authored meaning split across two graph
+      edges, which is the fragmentation failure the vocabulary layer exists to
+      prevent, reintroduced by the mapping layer.
+- [x] **Tool-configuration keys mint no quads** — `rdf`, `id`, `prefixes`,
+      `datatype` join the `spec/01` §3.1 denylist. The rule is *"a key mints
+      nothing when it is tool configuration with no RDF expression"*, **not** a
+      note-level exemption for vocabulary notes: exempting the note would
+      silently drop ordinary authored metadata (`source:`, `topic:`), and every
+      spec ranks a silent drop as the worse failure.
+- [x] **Direction composes by XOR** along an alignment chain; `inverseOf` applies
+      at the query boundary, *before* expansion, never after; cycles break by
+      codepoint order and are reported.
+- [x] **Alignment targets MAY be vault-local** — "my `built` is a kind of my
+      `made`" is the ordinary case, and the starter pack's "seeds the hierarchy"
+      rationale requires it.
+- [x] **schema.org's pretraining prevalence is a dated bet**, not a standing
+      fact — unmeasured, restated in four documents, load-bearing for all of §5,
+      and unlike a real constraint it decays. Test and review point recorded in
+      `spec/02` §5.9.
 
 Closed — vocabulary layer (2026-08-09):
 - [x] **Established vocabularies are a mapping target, never the authoring
@@ -344,17 +416,77 @@ Deferrable (from `spec/01`):
 | `PLAN.md` | This roadmap | living |
 | `spec/00-vision.md` | Anchor: why + architecture + decisions | draft v0.1 |
 | `spec/01-triple-authoring-syntax.md` | Human authoring surface | **draft v0.2** (scrutinized) |
-| `spec/02-data-model.md` | IRI/identity, **vocabulary layer**, RDF mapping, provenance, `QuadStore` port | **draft v0.1** ← review next |
-| `spec/03-ldp-http.md` | LDP resources/containers/verbs/conformance | to write |
+| `spec/02-data-model.md` | IRI/identity, **vocabulary layer**, RDF mapping, provenance, `QuadStore` port | **draft v0.2** (scrutinized) |
+| `spec/03-ldp-http.md` | LDP resources/containers/verbs/conformance | **to write ← next** |
 | `spec/04-index-store.md` | Physical store schema, indexer, scale envelope | Phase 3 entry (from ADR-0001 §5d) |
 | `spec/adr/0001-quad-store-backend.md` | Backend, the RDF/SPARQL split, documented limits | **LEANING SQLite** (closes Phase 3 exit) |
+| `spec/adr/0002-vocabulary-storage.md` | Where alignments live; how closure reads them | **LEANING quads + derived index** (closes Phase 3 entry) |
+| `spec/adr/0003-canonical-term-and-quad-identity.md` | Quad equality, provenance keying, golden-file stability | **LEANING canonical string** (closes Phase 2 exit) |
+| `spec/adr/0004-domain-range-semantics.md` | Constraint vs. RDFS inference on export | **LEANING `mldp:`** (revisit Phase 4) |
 
 ---
 
 ## 9. Changelog
 
-- **2026-08-09 — ▶ RESUME HERE. Backend leans SQLite; SPARQL demoted. `spec/02`
-  is still the next artifact to write.**
+- **2026-08-10 — ▶ RESUME HERE. `spec/02` scrutinized → v0.2; four Phase-2
+  blockers fixed; ADR-0002/0003/0004 opened. `spec/03-ldp-http.md` is the last
+  Phase-1 artifact.**
+  - **Four defects would each have blocked Phase 2 on their own**, and all four
+    were invisible to section-by-section reading — each pair of sections was
+    coherent alone and contradictory when composed.
+    - **The vocabulary layer had no storage.** §5.4 promised transitive
+      downward closure over `subPropertyOf` in MUSTs; §5.3 authored the
+      alignment as frontmatter; nothing connected them. Under §6.1 as written,
+      `subPropertyOf: schema:creator (inverted)` lowered to a **vault-local
+      predicate with an `xsd:string` object** — a string that looks like an
+      alignment and supports no closure at all. Opened as **ADR-0002**.
+    - **The `QuadStore` port was not implementable.** `prov: Map<Quad, …>` keys
+      on JavaScript *reference* identity, so it silently required the caller to
+      pass the same object references, and `provenance(q)` could never match a
+      freshly-built quad. §9's "identical quads collapse" had no definition of
+      identical. Opened as **ADR-0003**; the write path no longer needs keying
+      at all.
+    - **The three authoring forms did not lower identically**, despite §6.2
+      saying they do — §3.5 routed the three-link form's predicate through link
+      resolution while §5.10 routed `(( ))` through predicate resolution. Fixed
+      by making §5.10 the single resolution function for the predicate position.
+    - **§3.4's reversibility MUST was already false** for every `id:`-bearing
+      note — which, per §3.3, is every predicate-note and class-note. Scoped to
+      path-derived IRIs; the LDP face resolves through a map.
+  - **The canonical failure recurred, in identity.** `spec/02` §3.2 opened
+    *"Closing the decisions logged in `PLAN.md` §7 into implementable rules"* and
+    then specified a branch that was never in those rules: `id:` as an absolute
+    URI, used verbatim. It contradicted §3.1, §2, §3.4 and §3.3 simultaneously
+    and made the LDP face unable to serve the note. **Same shape as the SQLite
+    assumption ADR-0001 was written to catch** — a claim wearing the authority
+    of a decision it was never part of. Identity is now always vault-local;
+    external identity is a `sameAs:` assertion.
+  - **`domain`/`range` were borrowing RDFS names for the opposite semantics.**
+    In RDFS they are inference rules, not constraints — asserting `rdfs:domain`
+    licenses a reasoner to conclude every subject *is* that type, where both
+    specs describe a *validation warning*. Silent, and only at the R5b and LDP
+    boundaries. **ADR-0004**: keep the author-facing names, emit `mldp:`.
+  - **A drift finding, logged rather than fixed:** "schema.org is what LLMs know
+    from pretraining" entered as an observation in ADR-0001 §4a(ii) and became
+    settled justification across four documents in a single day. Probably true;
+    never measured; decays with each model generation; and now load-bearing for
+    the whole vocabulary layer. Recorded as a **dated bet** with a test and a
+    review point (`spec/02` §5.9).
+  - **A reconstruction that failed usefully.** Asked what a design would look
+    like with no alignment layer at all — converge the vocabulary at *write*
+    time via a frequency-ranked autocomplete instead. It fails, and the reason is
+    worth keeping: **the primary user has no authoring UI.** Imported notes and
+    AI-written notes pass through no picker. That is now recorded in `spec/02`
+    §5.1 as the positive argument for why §5 earns its size.
+  - **Next best step:** write **`spec/03-ldp-http.md`** — the last Phase-1
+    artifact. **Decide the LDP conformance target first** (§7): it determines
+    whether `spec/03` is a conformance document or a design sketch, so it is a
+    precondition for writing it, not an output. `spec/02` also hands `spec/03`
+    two concrete requirements: the IRI ⇄ path map (§3.4) and what `GET` on a
+    predicate-note returns (§5.3.1).
+
+- **2026-08-09 — Backend leans SQLite; SPARQL demoted. `spec/02` is still the
+  next artifact to write.**
   - **The requirement was wrong, not the backend.** `spec/00`/`PLAN` conflated
     the RDF **data model** with **SPARQL the query language**. They are
     separable. Keeping RDF is load-bearing (note-as-graph, `GET /note` → Turtle,

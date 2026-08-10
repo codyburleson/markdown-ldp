@@ -101,6 +101,11 @@ Markdown. After that, resolution is deterministic — git-diffable, reversible,
 testable, offline, free. Putting a model in the query path would cost all of
 that, and it would break exact citation, which is the whole product.
 
+Why alignment rather than just a smarter autocomplete that stops you inventing
+synonyms in the first place? Because **the user we're designing for has no
+editor** — imported notes and AI-written notes pass through no picker. A
+convergence mechanism that only fires in one optional client isn't one.
+
 ## Design decisions worth knowing
 
 | | |
@@ -144,10 +149,13 @@ Start at the top; each links onward.
 |---|---|---|
 | **[spec/00-vision.md](spec/00-vision.md)** | **Start here.** Why, what, architecture, the faces | draft |
 | [spec/01-triple-authoring-syntax.md](spec/01-triple-authoring-syntax.md) | How humans write triples in Markdown | draft v0.2 |
-| [spec/02-data-model.md](spec/02-data-model.md) | Identity/IRIs, the vocabulary layer, Markdown→quads, provenance, the store port | draft v0.1 |
+| [spec/02-data-model.md](spec/02-data-model.md) | Identity/IRIs, the vocabulary layer, Markdown→quads, provenance, the store port | draft v0.2 |
 | `spec/03-ldp-http.md` | LDP resources, containers, verbs | not written |
 | `spec/04-index-store.md` | Physical schema, indexer, scale envelope | not written |
 | [spec/adr/0001](spec/adr/0001-quad-store-backend.md) | Store backend + the RDF/SPARQL split | leaning SQLite |
+| [spec/adr/0002](spec/adr/0002-vocabulary-storage.md) | Where alignments live; how query-time closure reads them | leaning quads |
+| [spec/adr/0003](spec/adr/0003-canonical-term-and-quad-identity.md) | What makes two quads the same quad | leaning canonical string |
+| [spec/adr/0004](spec/adr/0004-domain-range-semantics.md) | `domain`/`range` are constraints, not RDFS inference | leaning `mldp:` |
 | **[PLAN.md](PLAN.md)** | Roadmap, phases, the spec-review gate, full decision log | living |
 
 ## Roadmap

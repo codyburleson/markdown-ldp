@@ -96,6 +96,9 @@ nonsense triples from configuration. Default policy:
 - **Reserved keys are ignored** — a built-in denylist of Obsidian/ecosystem
   config keys: `tags`, `aliases`, `cssclasses`, `publish`, `permalink`,
   `created`/`updated`, and tool-owned blocks (Templater, etc.). User-configurable.
+  **Extended by `02-data-model.md` §6.1** with this tool's own configuration
+  keys — `rdf`, `id`, `prefixes`, `datatype` — under the general rule that *a key
+  mints no quad when it is tool configuration with no RDF expression.*
 - **`tags` yields no triples** here, consistent with §7 (and §9's example).
 - **`type` — and Turtle's `a` — is the reserved typing key** → `rdf:type` (§8).
 - Every **other** key maps to a predicate in the vault vocabulary. Unknown
@@ -301,7 +304,7 @@ For many statements about one subject, or when prose would be noise:
 ```triple
 [[Einstein]]
   ((developed)) [[Theory of Relativity]] ;
-  ((won)) [[Nobel Prize in Physics]] (year:: 1921) ;
+  ((won)) [[Nobel Prize in Physics]] ~(year:: 1921) ;
   ((born in)) [[Ulm]] .
 ```
 ````
@@ -511,14 +514,21 @@ Decided:
   vocabulary-layer concern, not §8. (§8, v0.2 — fixes a v0.1 correctness bug)
 
 Still open:
-1. Literal datatype inference aggressiveness — and confirm comma-splitting for
-   inline `::` fields (`field:: [[A]], [[B]]`). (§3, §3.1)
+1. ~~Literal datatype inference aggressiveness — and confirm comma-splitting for
+   inline `::` fields.~~ **CLOSED** by `02-data-model.md` §7.3/§7.4: conservative
+   inference on full-string match with a `datatype:` override; comma-splitting
+   only when every part is a link or a quoted literal.
 2. Accept raw ` ```turtle ` blocks in addition to ` ```triple `. (§4.3)
-3. Validation strictness (advisory vs blocking) and SHACL emission. (§5)
-4. Whether predicate/class notes live in reserved folders or are found by a
-   frontmatter marker (`rdf: property` / `rdf: class`) regardless of location.
-   (§6)
-5. **External-link label → `rdfs:label`?** Whether a Markdown link's display text
-   is asserted as a label on the external IRI (opt-in vs off by default). (§4.1.2)
+3. Validation strictness (advisory vs blocking) and SHACL emission. (§5) — now
+   coupled to **ADR-0004**; `domain`/`range` are constraints, not RDFS
+   inference, and both questions should be answered together at Phase 4.
+4. ~~Whether predicate/class notes live in reserved folders or are found by a
+   frontmatter marker.~~ **CLOSED** by `02-data-model.md` §5.10: frontmatter
+   marker, anywhere in the vault; `predicates/` stays a convention only.
+5. ~~**External-link label → `rdfs:label`?**~~ **CLOSED** by `02-data-model.md`
+   §3.7: not asserted by default; opt-in per vault, and when enabled the triple
+   lands in the authoring note's graph so it stays attributable and removable.
 6. **Three-link shorthand:** confirm the whole-line, exactly-three-links rule is
    the shorthand we want (vs. a different lightweight alias). (§4.1c, new in v0.2)
+   Note `02-data-model.md` §3.5/§5.10 now guarantee its **middle link resolves as
+   a predicate**, not as an ordinary wikilink — that was a v0.1 defect.

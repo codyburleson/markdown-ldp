@@ -187,13 +187,23 @@ hatch only).
   determinism, testability, offline use, and, decisively, **exact citation**.
   (`spec/02` §5.)
 
+- **Identity is always vault-local; external identity is an assertion.** A note's
+  IRI is minted under the vault's base — path-derived, or `⟨base⟩id/⟨token⟩` when
+  pinned. An `id:` is never an absolute URI. To say a note is *about* a resource
+  that already has an IRI, the author writes `sameAs:` and gets an `owl:sameAs`
+  statement. The distinction matters because a note about Einstein is a
+  **document**, not the person — and because you cannot serve an IRI you don't
+  control. (`spec/02` §3.2.)
+
 **Closed since:** IRI scheme (configurable base, `https://` default, stored
 vault-relative); identity default (name/path derived, stable `id:` wins, tool
-mints ids); CURIEs (vocabulary + serialization via a vault prefix-map note — not
-identity); the core owns the store, clients query it. **Leaning (safe to spec
-against):** SQLite quad store; SPARQL demoted to an on-demand hatch — ADR-0001.
-**Still open (blocking Phase 1):** stack/monorepo confirmation; LDP conformance
-target. Full log in `PLAN.md` §7.
+mints ids, **always vault-local**); CURIEs (vocabulary + serialization via a
+vault prefix-map note — not identity); the core owns the store, clients query it.
+**Leaning (safe to spec against):** SQLite quad store and SPARQL demoted to an
+on-demand hatch (ADR-0001); vocabulary stored as ordinary quads (ADR-0002); quad
+identity as a canonical serialization (ADR-0003); `domain`/`range` emitted as
+`mldp:`, not `rdfs:` (ADR-0004). **Still open (blocking Phase 1):**
+stack/monorepo confirmation; LDP conformance target. Full log in `PLAN.md` §7.
 
 ## 8. Map of specs
 
@@ -206,3 +216,6 @@ target. Full log in `PLAN.md` §7.
 | `spec/03-ldp-http.md` | LDP resources/containers/verbs, conformance target |
 | `spec/04-index-store.md` | Physical store schema + indexer (starts from ADR-0001 §5d) |
 | `spec/adr/0001-quad-store-backend.md` | **LEANING SQLite** — backend, the RDF/SPARQL split, documented limits |
+| `spec/adr/0002-vocabulary-storage.md` | **LEANING quads + derived index** — where alignments live, how closure reads them |
+| `spec/adr/0003-canonical-term-and-quad-identity.md` | **LEANING canonical string** — quad equality, provenance keying |
+| `spec/adr/0004-domain-range-semantics.md` | **LEANING `mldp:`** — constraints, not RDFS inference |
