@@ -62,7 +62,8 @@ interop credibility. The *end* is a trustworthy, queryable, AI-legible graph.
 - Works on **plain Markdown**; Obsidian is the first dialect, not a dependency.
 
 **Non-goals (initially)**
-- Being a general triplestore/SPARQL engine (we grow toward query, not compete).
+- **Being a SPARQL engine.** We keep the RDF data model and can hand our quads
+  to a real SPARQL engine on demand; we do not implement one. See §5.
 - Perfect W3C LDP conformance on day one (target is chosen deliberately, §7).
 - Overloading Obsidian `#tags` with formal semantics (a dedicated SKOS layer
   comes later).
@@ -89,8 +90,9 @@ interop credibility. The *end* is a trustworthy, queryable, AI-legible graph.
 
 ```
 Layer 0  Mapping rules: Markdown constructs  ⇄  RDF quads     (tool-agnostic)
-Layer 1  Parser + incremental indexer          → quad store (+ provenance)   [backend OPEN: ADR-0001]
-Layer 2  Query engine (lightweight → SPARQL over time)
+Layer 1  Parser + incremental indexer          → quad store (+ provenance)   [SQLite, leaning: ADR-0001]
+Layer 2  Query layer: a bounded, cited traversal API
+         (+ on-demand RDF materialization for external SPARQL engines)
 Layer 3  Faces — thin CLIENTS of the core; none owns an index:
          ├─ MCP server       → AI face: query + cite the graph      ← primary
          ├─ CLI              → headless index/query, no editor      ← primary
@@ -109,13 +111,29 @@ On a file change, we **drop and replace that note's graph** — the named-graph
 model makes updates atomic per note, with no stale-quad diffing. Because the
 store is a *cache*, the backend is swappable behind a `QuadStore` port.
 
-**Store backend is an OPEN decision — see `spec/adr/0001-quad-store-backend.md`.**
-Earlier drafts stated "SQLite" as settled; it never was. Candidates (SQLite,
-Oxigraph, pure-JS quadstore, in-memory) are gated on a benchmark, and `spec/02`
-is written storage-agnostic so the data model does not depend on the outcome.
+**Store backend leans SQLite — see `spec/adr/0001-quad-store-backend.md`.** A
+dictionary-encoded quad table with permutation covering indexes, provenance as a
+side table, and FTS5 in the same transaction. Chosen for provenance ergonomics
+and hybrid text+graph retrieval, not for speed — speed is invisible behind an
+LLM tool call. `spec/02` stays storage-agnostic behind a `QuadStore` port, and
+an in-memory store ships first as the reference implementation.
+
+**We keep RDF; we do not build SPARQL.** These are separable commitments, and
+conflating them was the ADR's central error. The RDF *data model* (IRIs, named
+graphs, quoted triples) is load-bearing — it is what makes note-as-graph work
+and `GET /note` → Turtle fall out for free. SPARQL is one *language* over that
+model, and a general SPARQL endpoint is a questionable AI surface anyway:
+LLMs hallucinate predicates rather than run out of expressiveness, and an empty
+result reads to a model as "false" when it means "not asserted." So Layer 2 is a
+**small, bounded, provenance-carrying traversal API** — and because the store is
+a cache, any subgraph can be **streamed into an in-memory RDF engine for real
+SPARQL 1.1 on demand**, in about a second. We never build a compiler; we never
+lose the capability. *Tripwire: if we start writing a join planner or a query
+parser, stop and mount Oxigraph behind the port (ADR-0001 §7a).*
 
 **Stack (assumed; confirm):** TypeScript / Node, yarn, dependency-light. RDF
-libraries TBD (N3.js / rdf-ext; Comunica or Oxigraph if/when SPARQL).
+libraries TBD (N3.js / rdf-ext; Oxigraph or Comunica as the on-demand SPARQL
+hatch only).
 
 ## 6. The three faces (and why MCP matters most)
 
@@ -149,12 +167,18 @@ libraries TBD (N3.js / rdf-ext; Comunica or Oxigraph if/when SPARQL).
 - **Specs are gated.** Design precedes build; specs are reviewed before and
   reconciled after each build stage (`PLAN.md` §5).
 
+- **Bounded query surface over a SPARQL endpoint.** For an AI consumer, a small
+  set of named, cited, bounded operations beats a general query language: it
+  makes the model's ignorance legible instead of letting it manufacture
+  confident false negatives. (ADR-0001 §4a.)
+
 **Closed since:** IRI scheme (configurable base, `https://` default, stored
 vault-relative); identity default (name/path derived, stable `id:` wins, tool
 mints ids); CURIEs (vocabulary + serialization via a vault prefix-map note — not
-identity). **Still open (blocking Phase 1):** stack/monorepo confirmation; LDP
-conformance target. **Open, gated on benchmark (blocks Phase 3, not Phase 1):**
-quad store backend — ADR-0001. Full log in `PLAN.md` §7.
+identity); the core owns the store, clients query it. **Leaning (safe to spec
+against):** SQLite quad store; SPARQL demoted to an on-demand hatch — ADR-0001.
+**Still open (blocking Phase 1):** stack/monorepo confirmation; LDP conformance
+target. Full log in `PLAN.md` §7.
 
 ## 8. Map of specs
 
@@ -165,5 +189,5 @@ quad store backend — ADR-0001. Full log in `PLAN.md` §7.
 | `spec/01-triple-authoring-syntax.md` | Human authoring surface |
 | `spec/02-data-model.md` | IRIs/identity, Markdown→RDF-quads mapping, `QuadStore` port (storage-agnostic) |
 | `spec/03-ldp-http.md` | LDP resources/containers/verbs, conformance target |
-| `spec/04-index-store.md` | Physical store schema + indexer (written after ADR-0001 closes) |
-| `spec/adr/0001-quad-store-backend.md` | **OPEN** — which quad store backend, and its documented limits |
+| `spec/04-index-store.md` | Physical store schema + indexer (starts from ADR-0001 §5d) |
+| `spec/adr/0001-quad-store-backend.md` | **LEANING SQLite** — backend, the RDF/SPARQL split, documented limits |

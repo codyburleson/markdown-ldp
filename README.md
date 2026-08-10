@@ -30,7 +30,12 @@ AI-legible graph.
   `[[Subject]] ((predicate)) [[Object]]` statements, and ` ```triple ` blocks,
   with RDF-star `(...)` for per-statement provenance.
 - Markdown is the **source of truth**; the **quad store** is a derived,
-  rebuildable index (backend still open — see `spec/adr/0001-quad-store-backend.md`).
+  rebuildable index — leaning **SQLite**, with provenance as a side table and
+  full-text search in the same transaction as the graph
+  (see [spec/adr/0001-quad-store-backend.md](spec/adr/0001-quad-store-backend.md)).
+- **We keep RDF; we don't build SPARQL.** The query surface is a small, bounded,
+  *cited* traversal API — the right shape for an AI consumer. Because the index
+  is a cache, any subgraph can be handed to a real SPARQL engine on demand.
 - One reusable **TypeScript core**, three thin faces: an **LDP HTTP server**, an
   **Obsidian plugin**, and an **MCP server** (the AI-facing payoff).
 

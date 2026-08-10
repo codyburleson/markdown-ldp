@@ -42,9 +42,18 @@ North-star scenario:
   raw IRIs/prefixes.)
 - **Markdown is the source of truth.** The quad store is a derived, rebuildable
   index — never authoritative. Because it is a *cache*, the backend is swappable
-  behind a `QuadStore` port and **which backend is still an open decision**
-  (`spec/adr/0001-quad-store-backend.md`) — SQLite was an inherited assumption,
-  never a decision.
+  behind a `QuadStore` port. Backend **leans SQLite**
+  (`spec/adr/0001-quad-store-backend.md`) — reached on analysis, not inherited
+  from the first sketch: provenance as a plain side table (R3) and FTS5 in the
+  same transaction (R8) are what decide it.
+- **We keep RDF; we do not build SPARQL.** The RDF *data model* (IRIs, named
+  graphs, quoted triples) is load-bearing. SPARQL is one *language* over it, and
+  a general endpoint is a poor AI surface — models hallucinate predicates rather
+  than exhaust expressiveness, and empty results read as "false" when they mean
+  "not asserted." Layer 2 is a **bounded, cited traversal API**; full SPARQL is
+  available by **materializing quads into an in-memory RDF engine on demand**.
+  *Tripwire: writing a join planner or query parser means stop and mount
+  Oxigraph behind the port (ADR-0001 §7a).*
 - **Quads, not triples — named graphs are first-class.** The store is a **quad
   store** `(s, p, o, g)`. **Each note is a named graph** (named by its IRI); the
   **vault is the dataset** (identity + IRI base). Consequences: maps 1:1 to LDP
@@ -77,8 +86,9 @@ Authoring syntax (locked; see `spec/01-triple-authoring-syntax.md`):
 
 ```
 Layer 0  Mapping spec: Markdown constructs  ⇄  RDF        (tool-agnostic core rules)
-Layer 1  Parser + incremental indexer        → quad store (+ provenance)  [backend OPEN: ADR-0001]
-Layer 2  Query engine (start lightweight; grow toward SPARQL)
+Layer 1  Parser + incremental indexer        → quad store (+ provenance)  [SQLite, leaning: ADR-0001]
+Layer 2  Query layer: bounded, cited traversal API
+         (+ on-demand RDF materialization for external SPARQL engines)
 Layer 3  Faces — thin CLIENTS of the core; none owns an index (§2):
          ├─ MCP server       → the AI face: expose the graph to Claude   ← primary
          ├─ CLI              → headless index/query, no editor required  ← primary
@@ -90,7 +100,8 @@ The core runs **headless** and watches the **filesystem**, so a vault edited by
 an AI agent, a CLI, or any Markdown editor indexes identically.
 
 Stack (assumed; confirm): **TypeScript / Node**, yarn. RDF libs TBD
-(candidates: N3.js, rdf-ext; Comunica if/when SPARQL). Dependency-light bias.
+(candidates: N3.js, rdf-ext; Oxigraph or Comunica as the on-demand SPARQL hatch
+only). Dependency-light bias.
 
 ---
 
@@ -135,17 +146,24 @@ closed; a person could implement Phase 2 from the docs alone.
 - Exit: reconcile `spec/02` to the implementation; log deltas.
 
 ### Phase 3 — Index & query
-- Entry: **close ADR-0001** — run the §6 benchmark against candidates (SQLite,
-  Oxigraph, in-memory), settle "does the Obsidian plugin own a store?", then
-  write `spec/04-index-store.md` with the chosen physical schema **and a
-  published scale envelope** (tested vault sizes + the point where we tell the
-  user "beyond here, use X"). No store code before the ADR closes.
-- [ ] Persistent `QuadStore` implementation on the chosen backend (+ provenance)
+- Entry: write `spec/04-index-store.md` from the ADR-0001 §5d physical sketch
+  (dictionary-encoded terms, quad table, permutation covering indexes,
+  provenance side table, FTS5). No longer blocked on an engine bake-off — the
+  ADR leans SQLite and the remaining gate is measurement, moved to Exit.
+- [ ] Persistent `QuadStore` implementation on SQLite (+ provenance, FTS5)
 - [ ] Incremental indexer: **filesystem** change → re-parse → drop-and-replace
       graph; watch mode. No editor-specific event source.
-- [ ] Query layer v1 (pattern/graph queries); SPARQL later
-- [ ] Scale-envelope numbers documented in `spec/04` and surfaced in the README
-- Exit: reconcile spec; log deltas.
+- [ ] Query layer v1 — the **fixed set** of bounded traversal operations (R5a).
+      Adding operations is fine; accepting arbitrary user patterns is the
+      tripwire (ADR-0001 §7a).
+- [ ] R5b hatch: materialize a subgraph → in-memory RDF engine → run one real
+      SPARQL 1.1 query. Validation that the hatch exists; not a component.
+- [ ] Prototype the two hard bits: RDF-star terms (R4) and multi-span
+      provenance (R3)
+- Exit: **close ADR-0001** — run the reduced §6 measurement (SQLite + in-memory)
+  on the synthetic vaults, **publish the scale envelope** in `spec/04` and the
+  README (tested sizes + the point where we tell the user "beyond here, use X").
+  Reconcile spec; log deltas.
 
 ### Phase 4 — Schema & validation
 - Entry: spec class-note/predicate-note recognition + shape rules.
@@ -212,17 +230,31 @@ Blocking (close during Phase 1):
 - [ ] LDP conformance target: full W3C LDP 1.0 vs "LDP-inspired."
 - [ ] **Product name** — repo is *markdown-ldp*; docs now say the same. Confirm.
 
-Blocking Phase 3 (benchmark-gated, does **not** block Phase 1 or 2):
-- [ ] **Quad store backend** — `spec/adr/0001-quad-store-backend.md`. SQLite was
-      an inherited assumption, not a decision. Analysis so far: **scale is not
-      the risk** (SQLite covers ~10M quads; a large vault is ~1–2M). The real
-      risks are (a) SPARQL is a multi-month build on a hand-rolled SQL schema
-      and (b) RDF-star terms are fiddly in SQL. *(The Electron/native-module risk
-      is retired — the plugin no longer embeds a store.)* Now a two-horse race:
-      **SQLite** (control, FTS5, SQL escape hatch, plain-table provenance) vs.
-      **Oxigraph** (SPARQL 1.1 + RDF-star free, provenance modeled as quads, no
-      escape hatch). Closes on measured numbers, not argument.
+Leaning, safe to spec and build against (formal close at Phase 3 exit):
+- [~] **Quad store backend → SQLite** — `spec/adr/0001-quad-store-backend.md`.
+      Neither scale nor speed decided it (both are non-issues; speed is
+      invisible behind an LLM tool call). **R3 and R8 decided it**: provenance as
+      a plain indexable side table, and FTS5 in the same transaction as the
+      graph — the only candidate satisfying both in one file. Plus
+      inspectability, which matters under spec-driven development. The argument
+      that had opposed it (SPARQL build cost) **dissolved** once R5 was split.
+      Remaining gate is measurement + a published scale envelope, not a choice.
 - [ ] Client↔core transport (in-process / local HTTP / IPC). Small; not gating.
+
+Closed (this session):
+- [x] **SPARQL is not a store requirement.** R5 split: **R5a** a fixed, bounded,
+      cited traversal API (the product surface) + **R5b** materialize any
+      subgraph into an in-memory RDF engine for real SPARQL on demand (interop).
+      Keeps the RDF data model, drops the compiler. Tripwire recorded (§7a).
+- [x] **Embedded KV rejected** (LMDB/RocksDB; Redis rejected separately as a
+      *server*, and FalkorDB as a *property* graph). The permutation-index
+      design is legitimate — it is how Jena TDB and RDF4J work — and it makes R2
+      a prefix range delete. But it has no FTS (R8 becomes a second engine to
+      keep consistent — RR4 by the back door), no natural home for R3, and no
+      inspectability. **Its core idea is adopted inside SQLite** (ADR-0001 §5d):
+      dictionary-encoded terms + permutation covering indexes = the same prefix
+      range-scan primitive, with a planner and `SELECT` for free. Retained as a
+      future option for the bulk-import outlier.
 
 Closed:
 - [x] **IRI base scheme → configurable base, `https://` default, stored
@@ -277,14 +309,53 @@ Deferrable (from `spec/01`):
 | `spec/01-triple-authoring-syntax.md` | Human authoring surface | **draft v0.2** (scrutinized) |
 | `spec/02-data-model.md` | IRI/identity, RDF mapping, `QuadStore` port (storage-agnostic) | to write ← **next** |
 | `spec/03-ldp-http.md` | LDP resources/containers/verbs/conformance | to write |
-| `spec/04-index-store.md` | Physical store schema, indexer, scale envelope | after ADR-0001 |
-| `spec/adr/0001-quad-store-backend.md` | Which quad store backend + its limits | **OPEN** (benchmark-gated) |
+| `spec/04-index-store.md` | Physical store schema, indexer, scale envelope | Phase 3 entry (from ADR-0001 §5d) |
+| `spec/adr/0001-quad-store-backend.md` | Backend, the RDF/SPARQL split, documented limits | **LEANING SQLite** (closes Phase 3 exit) |
 
 ---
 
 ## 9. Changelog
 
-- **2026-08-07 — ▶ RESUME HERE. Store backend re-opened; `spec/02` is next.**
+- **2026-08-09 — ▶ RESUME HERE. Backend leans SQLite; SPARQL demoted. `spec/02`
+  is still the next artifact to write.**
+  - **The requirement was wrong, not the backend.** `spec/00`/`PLAN` conflated
+    the RDF **data model** with **SPARQL the query language**. They are
+    separable. Keeping RDF is load-bearing (note-as-graph, `GET /note` → Turtle,
+    exportability); building SPARQL is not. R5 split into **R5a** (a fixed,
+    bounded, provenance-carrying traversal API — the actual product surface) and
+    **R5b** (materialize any subgraph into an in-memory RDF engine for real
+    SPARQL 1.1 on demand — interop, ~1s at our scale, because R6 makes the store
+    a cache). This **dissolves RR1**, the multi-month BGP→SQL compiler that was
+    the strongest argument against SQLite.
+  - **A general SPARQL endpoint is also the wrong AI surface, not just a costly
+    one.** LLMs emit valid SPARQL and hallucinate *predicates* — the bottleneck
+    is vocabulary, not expressiveness. Empty results mean "not asserted" but
+    read to a model as "false." Unbounded queries blow the context window. And
+    the product's differentiator is **citation**, a provenance-join — the thing
+    RDF engines model worst.
+  - **Embedded KV (LMDB/RocksDB) considered and rejected** as candidate F;
+    Redis rejected separately (a *server*, not embedded; FalkorDB is a
+    *property* graph). The permutation-index design is the classical
+    triplestore architecture and makes R2 a prefix range delete — but no FTS
+    (R8 becomes a second engine to keep consistent), no home for R3, no
+    inspectability. **Its idea is adopted inside SQLite** (§5d).
+  - **Leaning candidate A — SQLite** (§5d): dictionary-encoded terms,
+    four-integer quad table, permutation covering indexes, provenance side
+    table, FTS5 in the same database. Decided on **R3 + R8 + inspectability** —
+    explicitly *not* on scale or speed, both of which are non-issues (query
+    latency is invisible behind an LLM tool call round-trip).
+  - **Tripwire recorded (§7a):** if we start writing a join planner, a BGP
+    compiler, or a query parser, stop and mount Oxigraph behind the
+    `QuadStore` port. The port stays mandatory in Phase 2.
+  - **Phase 3 unblocked and resequenced.** The ADR gate shrank from an engine
+    bake-off to a scale-envelope *measurement*, moved from Phase 3 **entry** to
+    Phase 3 **exit**. `spec/04` can now be written at entry from §5d.
+  - **The riskiest open question is no longer the backend — it is predicate
+    vocabulary design.** That is what determines whether an AI can use this
+    graph at all, and it lives in `spec/01`/`spec/02`.
+  - **Next best step (unchanged):** write `spec/02-data-model.md`.
+
+- **2026-08-07 — Store backend re-opened as ADR-0001; core owns the store.**
   - **SQLite was never decided** — it was an assumption inherited from the first
     sketch and had hardened into prose across `spec/00`, `PLAN`, and `README`.
     Re-opened as **ADR-0001** and struck from all three as settled fact.
@@ -312,6 +383,9 @@ Deferrable (from `spec/01`):
     reduces to **A vs. B on the benchmark**.
   - **Next best step (unchanged, now safe to take):** write `spec/02-data-model.md`.
   - Product name settled to **markdown-ldp** across docs.
+  - *(Superseded 2026-08-09: the A-vs-B benchmark race described here no longer
+    runs — RR1 dissolved and the ADR leans SQLite. The scale-envelope
+    deliverable survives.)*
 
 - **2026-08-04 (eve)**
   - **Where we left off:** `spec/01` is at **v0.2**, fully scrutinized
