@@ -12,30 +12,43 @@ build upward from those alone.
 
 **Target:** $ARGUMENTS
 
-If no target was given, run `git log --name-only -8 -- 'spec/**' '*.md'` and
-analyze the most recently changed spec. State which one you picked.
+If no target was given, find where this project keeps its specs (common homes:
+`spec/`, `specs/`, `docs/`, `rfcs/`, `design/`, or design documents at the
+root), then run
+`git log --format='%h %ad %s' --date=short --name-only -6 -- <that path>` and
+analyze the most recently changed spec. State which one you picked and why.
+
+If the target is a topic rather than a file, first identify the documents where
+that topic actually lives, name them, and treat that set as the target.
 
 ---
 
 ## Before you begin
 
-Read the target document **in full**. Then read enough of its neighbors to
-detect drift — at minimum `PLAN.md` §7 (decision log) and `spec/00-vision.md`
-(the anchor). You are looking for claims that appear as settled fact in this
-document but were never decided anywhere.
+Read the target document **in full**. Then locate and read this project's
+record of decisions — ADRs, a decision log, RFC threads, a plan or roadmap
+with locked decisions — and its anchor document (vision, charter, or README),
+enough to detect drift. You are looking for claims that appear as settled fact
+in the target but are recorded as *open* elsewhere — or were never decided
+anywhere at all.
 
-**This project has already been burned by exactly that failure**, and it is your
-calibration example:
+If the project has **no** decision record, say so before Phase 1: nothing can
+then be classified as *Logged*, and every settled-sounding claim is suspect by
+default. That absence is itself a finding.
 
-> "SQLite quad store" appeared in `spec/00`, `PLAN.md`, and `README.md` as
-> though settled. It never was — it was an assumption inherited from the first
-> sketch that hardened into prose across three documents through repetition
-> alone. It was load-bearing: the Layer-1 diagram, the Phase-3 roadmap, and the
-> planned contents of `spec/02` all rested on it. It became ADR-0001, and the
-> re-examination changed the design. (See `spec/adr/0001-quad-store-backend.md`
-> §1 and §4a.)
+The failure class you exist to find, in its canonical form:
 
-That is the class of thing you exist to find. Find the next one.
+> A storage-engine choice appears in the vision doc, the plan, and the README
+> as though settled. It never was — it was an assumption inherited from the
+> first sketch that hardened into prose across three documents through
+> repetition alone. And it is load-bearing: the architecture diagram, a
+> roadmap phase, and the planned contents of a downstream spec all rest on it.
+> When someone finally forces the question into a real decision, the
+> re-examination changes the design.
+
+Find this project's version of that — and remember it need not be a technology
+choice. Product scope, authoring rules, and audience claims harden by
+repetition in exactly the same way.
 
 ---
 
@@ -48,7 +61,7 @@ selective. For each, classify the **origin**:
 |---|---|
 | **Logged** | A real decision with recorded rationale. Legitimate — but check the rationale still holds. |
 | **Inherited** | Carried from an earlier draft or sketch, never decided. Hardened by repetition. *Highest-yield category.* |
-| **Borrowed** | Taken from convention — RDF/Semantic Web orthodoxy, Obsidian's model, "how knowledge tools work." |
+| **Borrowed** | Taken from convention — a standard's orthodoxy, an incumbent tool's model, "how projects like this always do it." |
 | **Defensive** | Adopted from fear of a scenario that may not apply at this project's scale. |
 | **Ambient** | Never articulated at all. You inferred it from what the document takes for granted. Hardest to see; often the most load-bearing. |
 
@@ -69,7 +82,9 @@ Score each assumption on two axes:
 - **Cost of late discovery** — cheap to reverse later, or expensive?
 
 Rank by `load-bearing × cost-of-late-discovery`. That ordering is the actual
-product of this phase.
+product of this phase. Be exhaustive in inventory but selective in
+presentation: detail the top-ranked assumptions; compress the long tail into
+one compact table so the ranking isn't drowned by its own thoroughness.
 
 ## PHASE 2 — IRREDUCIBLE TRUTHS
 
@@ -77,16 +92,17 @@ Strip to what remains when every assumption is removed. **Two lists, kept
 strictly separate** — conflating them is how this exercise fails:
 
 **2a. External truths.** Forced by reality, independent of anyone's intent.
-Properties of the medium (Markdown is plain text on a filesystem, edited by
-tools we don't control), of the consumer (an LLM has a context window, a
-latency floor, and pretraining priors), of mathematics and physics, of measured
-facts. Not "generally accepted." Not "what the ecosystem does." Only what
-survives every removal.
+Properties of the medium (a file format's actual grammar, a network's latency,
+tools the project doesn't control), of the consumer (a human's attention, a
+machine's memory, an LLM's context window), of mathematics and physics, of
+measured facts. Not "generally accepted." Not "what the ecosystem does." Only
+what survives every removal.
 
 **2b. Chosen axioms.** The project's own ἀρχαί — commitments deliberately
 adopted, not deducible from anything, and legitimately foundational because
-this project *chose* them. `Human-first, RDF-hidden` is one. `Markdown is the
-source of truth` is another.
+this project *chose* them. Read them out of the anchor documents: statements
+like "local-first," "zero runtime dependencies," or "plain text is the source
+of truth" are this kind, not the 2a kind.
 
 > These are **not** assumptions to dissolve. An inquiry needs its ends given.
 > Dissolving them produces nihilism, not clarity. Your job is to state them
@@ -103,8 +119,8 @@ Using **only** Phase 2, rebuild the document's design as if no prior approach
 existed — including this project's own prior drafts.
 
 > *If we were specifying this for the first time, knowing only the irreducible
-> truths and the chosen axioms, and having never seen RDF, Obsidian, or the
-> earlier drafts — what would we specify?*
+> truths and the chosen axioms, and having never seen the incumbent tools, the
+> reigning conventions, or the earlier drafts — what would we specify?*
 
 Generate **3 distinct approaches**. Each must start purely from Phase 2, not
 from a variation of what's already written. If all three resemble the existing
@@ -137,12 +153,17 @@ recommendation you would defend.
 Then state its **falsifier**: what would have to be true for this move to be
 wrong? A move with no falsifier is rhetoric, not reasoning.
 
+If no candidate move survives its own falsifier — or every candidate merely
+restates a decision already logged — say so: *"the foundations survive"* is a
+legitimate Phase-5 verdict, and per the discipline below it beats a
+manufactured move.
+
 ---
 
 ## Output discipline
 
 - Direct, clear language. No filler, no hedging, no throat-clearing.
-- Cite by section: `spec/02 §5.4`, not "the vocabulary part."
+- Cite by section: `spec/02 §5.4`, not "the storage part."
 - **Distinguish what you verified from what you inferred.** If you're reasoning
   about a claim you did not check against the document, say so.
 - Where you find nothing wrong, **say so plainly** rather than manufacturing a
@@ -152,12 +173,15 @@ wrong? A move with no falsifier is rhetoric, not reasoning.
 
 ## Landing the results
 
-Close with three short lists, so the analysis converts into project practice:
+Close with three short lists, so the analysis converts into project practice —
+phrased in the idiom of whatever decision record this project actually uses
+(discovered above), or proposing one if none exists:
 
-1. **Log these** — decisions to record in `PLAN.md` §7, phrased as log entries.
+1. **Log these** — decisions to record in the project's decision log, each
+   phrased as a ready-to-paste entry with its one-paragraph rationale.
 2. **ADR these** — questions load-bearing enough to deserve their own ADR, in
-   the style of `spec/adr/0001`.
-3. **Fix in place** — smaller corrections for the next spec-review gate
-   (`PLAN.md` §5), each with its section reference.
+   the project's ADR style if it has one.
+3. **Fix in place** — smaller corrections for the document's next review pass,
+   each with its section reference.
 
 Then ask whether to proceed with any of them.
