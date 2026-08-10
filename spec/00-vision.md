@@ -74,7 +74,9 @@ interop credibility. The *end* is a trustworthy, queryable, AI-legible graph.
   and a *named graph* holding the statements authored within it.
 - **Statement** — a subject–predicate–object triple, authored in a note.
 - **Predicate** — a note (`rdf: property`) defining a relationship's meaning,
-  inverse, domain, and range. **Predicates carry the formal semantics.**
+  inverse, domain, and range. **Predicates carry the formal semantics.** A
+  predicate-note also carries its **alignment** to an established vocabulary
+  (`subPropertyOf: schema:creator (inverted)`) — see below.
 - **Class** — a note (`rdf: class`) defining an entity type and its shape;
   a **template** is its constructor; an instance is a typed subject.
 - **Named graph** — **each note is a named graph**, named by its IRI. The graph
@@ -171,6 +173,19 @@ hatch only).
   set of named, cited, bounded operations beats a general query language: it
   makes the model's ignorance legible instead of letting it manufacture
   confident false negatives. (ADR-0001 §4a.)
+- **Established vocabularies are a mapping target, never the authoring
+  surface.** Authors write `((developed))`; the predicate-note carries
+  `subPropertyOf: schema:creator (inverted)`. Schema.org earns its place mainly
+  because **LLMs already know it from pretraining** — emitting those IRIs makes
+  the graph legible with no schema-teaching in the prompt. CiTO covers the
+  epistemic relations schema.org lacks (`supports`, `disagreesWith`).
+- **AI curates the vocabulary; it never resolves it.** Free-form predicate
+  minting must always work, but it fragments a vault into synonyms and makes
+  queries under-recall *confidently*. So an AI **proposes** an alignment, a
+  human accepts, and the result becomes a durable line of Markdown — after
+  which resolution is deterministic forever. AI in the query path would cost
+  determinism, testability, offline use, and, decisively, **exact citation**.
+  (`spec/02` §5.)
 
 **Closed since:** IRI scheme (configurable base, `https://` default, stored
 vault-relative); identity default (name/path derived, stable `id:` wins, tool
@@ -187,7 +202,7 @@ target. Full log in `PLAN.md` §7.
 | `PLAN.md` | Roadmap, phases, spec-review gate, decision log |
 | `spec/00-vision.md` | *This doc* — why, what, architecture, faces |
 | `spec/01-triple-authoring-syntax.md` | Human authoring surface |
-| `spec/02-data-model.md` | IRIs/identity, Markdown→RDF-quads mapping, `QuadStore` port (storage-agnostic) |
+| `spec/02-data-model.md` | IRIs/identity, **vocabulary layer & alignment**, Markdown→RDF-quads mapping, provenance, `QuadStore` port (storage-agnostic) |
 | `spec/03-ldp-http.md` | LDP resources/containers/verbs, conformance target |
 | `spec/04-index-store.md` | Physical store schema + indexer (starts from ADR-0001 §5d) |
 | `spec/adr/0001-quad-store-backend.md` | **LEANING SQLite** — backend, the RDF/SPARQL split, documented limits |

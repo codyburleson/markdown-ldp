@@ -120,8 +120,9 @@ Ready** (§6). This is the design work we are doing now.
 - [x] `PLAN.md` — this roadmap (living)
 - [x] `spec/00-vision.md` — anchor: why, architecture, faces, decision log
       (draft v0.1)
-- [ ] `spec/02-data-model.md` — IRI/identity, Markdown→RDF mapping, `QuadStore`
-      port. **Storage-agnostic** — no physical schema (see ADR-0001)
+- [x] `spec/02-data-model.md` — IRI/identity, the **vocabulary layer**,
+      Markdown→RDF mapping, provenance, `QuadStore` port (draft v0.1).
+      **Storage-agnostic** — no physical schema (see ADR-0001)
 - [ ] `spec/03-ldp-http.md` — LDP resources/containers/verbs/conformance target
 - [x] `spec/adr/0001-quad-store-backend.md` — backend question **opened** and
       framed; requirements R1–R8, scale envelope, candidates, benchmark gate
@@ -241,6 +242,42 @@ Leaning, safe to spec and build against (formal close at Phase 3 exit):
       Remaining gate is measurement + a published scale envelope, not a choice.
 - [ ] Client↔core transport (in-process / local HTTP / IPC). Small; not gating.
 
+Closed — vocabulary layer (2026-08-09):
+- [x] **Established vocabularies are a mapping target, never the authoring
+      surface.** Author writes `((developed))`; the predicate-note carries
+      `subPropertyOf: schema:creator (inverted)`. `((schema:creator))` as the
+      normal way to write would violate Human-first outright.
+- [x] **AI in the curation loop, never the query loop.** An AI *proposes* an
+      alignment; a human accepts; the result is written into the predicate-note
+      as a **durable Markdown fact**. Thereafter resolution is deterministic —
+      git-diffable, reversible, golden-file testable, offline, zero per-query
+      cost. Decisive reason: **you cannot cite a fuzzy match**, and citation is
+      the product. Corollary: **no normalization at index time either** —
+      indexing MUST stay a pure function of vault + committed vocabulary.
+- [x] **`subPropertyOf` beats equivalence.** `developed` is *narrower* than
+      `schema:creator`, not equal to it. Downward-closed transitive expansion
+      gives sound recall on the broad term and precision on the narrow one, with
+      nothing overstated. (This is also the one SPARQL capability worth having —
+      and it's a recursive CTE.)
+- [x] **Alignments carry direction.** `(( ))` is subject-first and
+      sentence-shaped; schema.org is noun-shaped and usually points the other
+      way, and defines almost no inverses. Hence the `(inverted)` marker.
+- [x] **Inverses resolved at query time**, never materialized — half the
+      storage, no R2 consistency burden, and a materialized inverse quad's
+      provenance would be a lie.
+- [x] **CiTO adopted** for the epistemic layer (`supports`, `disagreesWith`,
+      `citesAsEvidence`). Schema.org is web-publishing shaped and has nothing
+      here; vault-local terms would have nothing to align *up to*.
+- [x] **Starter pack ships** — ~40–60 pre-aligned predicate-notes. Not
+      convenience: it **seeds the hierarchy** so the first curation pass has
+      something to attach to. Opt-in, ordinary Markdown, never special-cased.
+- [x] **MCP emits both the human label and the canonical IRI** in every result —
+      the word the model can read plus the IRI it memorized in pretraining.
+- [x] Also closed in `spec/02`: percent-encoding (not `_` substitution) in IRIs;
+      link-resolution vs IRI-derivation separated; conservative datatype
+      inference; comma-splitting rule; predicate/class notes found by frontmatter
+      marker anywhere; external link labels not `rdfs:label`.
+
 Closed (this session):
 - [x] **SPARQL is not a store requirement.** R5 split: **R5a** a fixed, bounded,
       cited traversal API (the product surface) + **R5b** materialize any
@@ -307,7 +344,7 @@ Deferrable (from `spec/01`):
 | `PLAN.md` | This roadmap | living |
 | `spec/00-vision.md` | Anchor: why + architecture + decisions | draft v0.1 |
 | `spec/01-triple-authoring-syntax.md` | Human authoring surface | **draft v0.2** (scrutinized) |
-| `spec/02-data-model.md` | IRI/identity, RDF mapping, `QuadStore` port (storage-agnostic) | to write ← **next** |
+| `spec/02-data-model.md` | IRI/identity, **vocabulary layer**, RDF mapping, provenance, `QuadStore` port | **draft v0.1** ← review next |
 | `spec/03-ldp-http.md` | LDP resources/containers/verbs/conformance | to write |
 | `spec/04-index-store.md` | Physical store schema, indexer, scale envelope | Phase 3 entry (from ADR-0001 §5d) |
 | `spec/adr/0001-quad-store-backend.md` | Backend, the RDF/SPARQL split, documented limits | **LEANING SQLite** (closes Phase 3 exit) |
@@ -351,9 +388,23 @@ Deferrable (from `spec/01`):
     bake-off to a scale-envelope *measurement*, moved from Phase 3 **entry** to
     Phase 3 **exit**. `spec/04` can now be written at entry from §5d.
   - **The riskiest open question is no longer the backend — it is predicate
-    vocabulary design.** That is what determines whether an AI can use this
-    graph at all, and it lives in `spec/01`/`spec/02`.
-  - **Next best step (unchanged):** write `spec/02-data-model.md`.
+    vocabulary design.** Addressed same day; see below.
+  - **`spec/02-data-model.md` written (draft v0.1)** — identity/IRIs, the
+    vocabulary layer, the full Markdown→quads mapping, provenance, and the
+    `QuadStore` port. Closes six `spec/01` `[DECIDE]`s in their natural home.
+  - **Vocabulary layer settled** (full list in §7). The frame: free-form minting
+    stays mandatory (Human-first), and the failure it causes is **recall through
+    fragmentation**, not comprehension — `developed`/`created`/`authored` as
+    five unrelated predicates make a query miss four of them *confidently, with
+    citations*. Fix is **alignment between predicates**, committed as durable
+    Markdown by a human, expanded deterministically at query time. Schema.org is
+    the target vocabulary chiefly because **LLMs already know it from
+    pretraining**, which attacks the vocabulary bottleneck in ADR-0001 §4a(ii)
+    directly.
+  - **Next best step:** review `spec/02` against the Definition of Ready (§6),
+    then the Phase-1 spec-review gate. `spec/03-ldp-http.md` is the last
+    Phase-1 artifact; the LDP conformance target and stack/monorepo confirm
+    remain the blocking decisions.
 
 - **2026-08-07 — Store backend re-opened as ADR-0001; core owns the store.**
   - **SQLite was never decided** — it was an assumption inherited from the first
