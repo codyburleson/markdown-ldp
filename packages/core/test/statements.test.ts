@@ -92,6 +92,44 @@ describe('spec/01 §4.1c — positional form does not misfire on prose', () => {
   })
 })
 
+/**
+ * Regression: running the demo over this project's own README minted a
+ * statement out of a bullet documenting the syntax. Prose *about* the syntax
+ * is prose — the same restraint spec/02 §6.5 applies to plain wikilinks.
+ */
+describe('inline code spans mint nothing', () => {
+  it('ignores a field inside backticks', () => {
+    none('- `field:: [[Physics]]` — a typed statement about this note')
+  })
+
+  it('ignores a fenced predicate inside backticks', () => {
+    none('The `((developed))` token fences a predicate.')
+  })
+
+  it('ignores a positional statement inside backticks', () => {
+    none('Write `[[A]] [[p]] [[B]]` for the shorthand.')
+  })
+
+  it('still parses a real statement on a line that also has code', () => {
+    const s = one('author:: [[Einstein]] `not a field:: here`')
+    assert.equal(s.predicate.token, 'author')
+    assert.equal(s.object.kind === 'wikilink' && s.object.target, 'Einstein')
+  })
+
+  it('leaves an unmatched backtick alone', () => {
+    const s = one('author:: [[Einstein]]')
+    assert.equal(s.predicate.token, 'author')
+    // A stray backtick must not swallow the rest of the line.
+    const stray = one('author:: [[Einstein]] ` stray')
+    assert.equal(stray.predicate.token, 'author')
+  })
+
+  it('keeps spans true to the source despite masking', () => {
+    const { statements } = parseLine('`x` author:: [[Einstein]]', 8)
+    assert.equal(statements[0]?.span.colStart, 4)
+  })
+})
+
 describe('spec/01 §4.2 — `~( … )` statement metadata', () => {
   it('attaches annotations to the statement it follows', () => {
     const s = one(

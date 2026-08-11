@@ -35,6 +35,54 @@ export interface LineParseResult {
   diagnostics: ParseDiagnostic[]
 }
 
+/**
+ * Blank out inline code spans, preserving length so every column stays true.
+ *
+ * Prose *about* the syntax is still prose: `` `field:: [[Physics]]` `` in a
+ * sentence is an example being discussed, not a statement being made. This is
+ * the same restraint `spec/02` §6.5 applies to plain wikilinks — and without
+ * it, running the indexer over this project's own README mints a statement out
+ * of its documentation.
+ */
+function maskInlineCode(text: string): string {
+  let out = ''
+  let i = 0
+  while (i < text.length) {
+    if (text[i] !== '`') {
+      out += text[i]
+      i += 1
+      continue
+    }
+
+    let run = 0
+    while (text[i + run] === '`') run += 1
+    const fence = '`'.repeat(run)
+
+    // A closing run must be exactly this long — ``a`b`` closes on the pair.
+    let search = i + run
+    let close = -1
+    while (search < text.length) {
+      const at = text.indexOf(fence, search)
+      if (at === -1) break
+      if (text[at + run] !== '`' && text[at - 1] !== '`') {
+        close = at
+        break
+      }
+      search = at + 1
+    }
+
+    if (close === -1) {
+      out += text[i]
+      i += 1
+      continue
+    }
+
+    out += ' '.repeat(close + run - i)
+    i = close + run
+  }
+  return out
+}
+
 const isResource = (t: RawObject): t is RawSubject =>
   t.kind === 'wikilink' || t.kind === 'mdlink'
 
@@ -110,8 +158,10 @@ function parseAnnotations(
  * would otherwise be misread as a two-link statement once the `::` key happens
  * to contain a link.
  */
-export function parseLine(text: string, line: number): LineParseResult {
+export function parseLine(rawText: string, line: number): LineParseResult {
   const diagnostics: ParseDiagnostic[] = []
+  // Masking is length-preserving, so every span below stays true to the source.
+  const text = maskInlineCode(rawText)
   const { body, annotation, at } = splitAnnotation(text)
   const annotations =
     annotation === null ? [] : parseAnnotations(annotation, line, at + 2)
