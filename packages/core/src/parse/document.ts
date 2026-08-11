@@ -6,7 +6,12 @@
  * that mints statements from documentation would index its own README.
  */
 
-import type { ParseDiagnostic, ParsedDocument, RawStatement } from '../types.ts'
+import type {
+  FrontmatterMap,
+  ParseDiagnostic,
+  ParsedDocument,
+  RawStatement,
+} from '../types.ts'
 import { parseFrontmatter } from './frontmatter.ts'
 import { parseLine } from './statements.ts'
 import { parseTripleBlock } from './triple-blocks.ts'
@@ -17,10 +22,12 @@ const FENCE = /^(\s*)(`{3,}|~{3,})\s*(\S*)/
 export function parseDocument(path: string, source: string): ParsedDocument {
   const lines = source.split(/\r?\n/)
   const statements: RawStatement[] = []
+  const frontmatterMaps: FrontmatterMap[] = []
   const diagnostics: ParseDiagnostic[] = []
 
   const front = parseFrontmatter(lines)
   statements.push(...front.statements)
+  frontmatterMaps.push(...front.maps)
   diagnostics.push(...front.diagnostics)
 
   let i = front.linesConsumed
@@ -57,7 +64,7 @@ export function parseDocument(path: string, source: string): ParsedDocument {
     i += 1
   }
 
-  return { path, statements, diagnostics }
+  return { path, statements, frontmatterMaps, diagnostics }
 }
 
 /** Index of the closing fence, or -1. A closing fence is at least as long as

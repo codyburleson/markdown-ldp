@@ -1,0 +1,17 @@
+{
+  "name": "@markdown-ldp/fixtures",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The reference vault — shared test corpus for every package",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

@@ -7,6 +7,7 @@
 
 export type {
   Form,
+  FrontmatterMap,
   LiteralValue,
   MarkdownLinkRef,
   ParseDiagnostic,

@@ -108,10 +108,27 @@ export interface ParseDiagnostic {
   span: Span
 }
 
+/**
+ * A nested frontmatter map — `key:` followed by an indented `k: v` block.
+ *
+ * Kept apart from statements because it is not one: `spec/02` §4's prefix map
+ * is structured configuration, and flattening it into subject–predicate–object
+ * would invent semantics the author did not write. The vocabulary loader reads
+ * these; the mapping engine ignores them.
+ */
+export interface FrontmatterMap {
+  /** The outer key — `prefixes` for `spec/02` §4. */
+  key: string
+  entries: { key: string; value: string; span: Span }[]
+  span: Span
+}
+
 export interface ParsedDocument {
   /** Vault-relative path, as given. The parser never touches the filesystem. */
   path: string
   /** Frontmatter and inline fields both lower to statements about this note. */
   statements: RawStatement[]
+  /** Nested frontmatter maps, in document order (`spec/02` §4). */
+  frontmatterMaps: FrontmatterMap[]
   diagnostics: ParseDiagnostic[]
 }

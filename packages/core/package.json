@@ -9,10 +9,12 @@
   },
   "scripts": {
     "demo": "node examples/dump.ts",
+    "golden": "UPDATE_GOLDEN=1 node --test \"test/vault.test.ts\"",
     "test": "node --test \"test/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@markdown-ldp/fixtures": "workspace:^",
     "@types/node": "^24.0.0",
     "typescript": "^5.9.0"
   }

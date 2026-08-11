@@ -1,0 +1,542 @@
+# classes/Agent.md
+  frontmatter  2:0-10
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <class> (2:5-10)
+  frontmatter  3:0-9
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <Agent> (3:4-9)
+  frontmatter  4:0-29
+    s  <this note>
+    p  equivalentClass (frontmatter-key 4:0-15)
+    o  <schema:Agent> (4:17-29)
+
+# classes/Person.md
+  frontmatter  2:0-10
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <class> (2:5-10)
+  frontmatter  3:0-10
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <Person> (3:4-10)
+  frontmatter  4:0-21
+    s  <this note>
+    p  subClassOf (frontmatter-key 4:0-10)
+    o  [[Agent]] (4:12-21)
+  frontmatter  5:0-30
+    s  <this note>
+    p  equivalentClass (frontmatter-key 5:0-15)
+    o  <schema:Person> (5:17-30)
+  inline-field  12:0-22
+    s  <this note>
+    p  requires (field-key 12:0-8)
+    o  [[born in]] (12:11-22)
+  inline-field  13:0-34
+    s  <this note>
+    p  allows (field-key 13:0-6)
+    o  [[developed]] (13:9-22)
+  inline-field  13:0-34
+    s  <this note>
+    p  allows (field-key 13:0-6)
+    o  [[author]] (13:24-34)
+
+# classes/Place.md
+  frontmatter  2:0-10
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <class> (2:5-10)
+  frontmatter  3:0-9
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <Place> (3:4-9)
+  frontmatter  4:0-29
+    s  <this note>
+    p  equivalentClass (frontmatter-key 4:0-15)
+    o  <schema:Place> (4:17-29)
+
+# classes/Work.md
+  frontmatter  2:0-10
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <class> (2:5-10)
+  frontmatter  3:0-8
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <Work> (3:4-8)
+  frontmatter  4:0-36
+    s  <this note>
+    p  equivalentClass (frontmatter-key 4:0-15)
+    o  <schema:CreativeWork> (4:17-36)
+
+# edge-cases/comma-values.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  inline-field  6:0-35
+    s  <this note>
+    p  field (field-key 6:0-5)
+    o  [[Physics]] (6:8-19)
+  inline-field  6:0-35
+    s  <this note>
+    p  field (field-key 6:0-5)
+    o  [[Relativity]] (6:21-35)
+  inline-field  8:0-22
+    s  <this note>
+    p  born in (field-key 8:0-7)
+    o  <Ulm, Germany> (8:10-22)
+  inline-field  10:0-20
+    s  <this note>
+    p  alias (field-key 10:0-5)
+    o  "Al" (10:8-12)
+  inline-field  10:0-20
+    s  <this note>
+    p  alias (field-key 10:0-5)
+    o  "Bert" (10:14-20)
+  inline-field  12:0-34
+    s  <this note>
+    p  note (field-key 12:0-4)
+    o  <[[Einstein]], and also Bohr> (12:7-34)
+
+# edge-cases/conflicting-functional.md
+  frontmatter  2:0-16
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Person]] (2:6-16)
+  frontmatter  3:0-16
+    s  <this note>
+    p  born in (frontmatter-key 3:0-7)
+    o  [[Ulm]] (3:9-16)
+  inline-field  7:0-20
+    s  <this note>
+    p  born in (field-key 7:0-7)
+    o  [[Munich]] (7:10-20)
+
+# edge-cases/curie-keys.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  frontmatter  3:0-25
+    s  <this note>
+    p  dct:creator (frontmatter-key 3:0-11)
+    o  [[Einstein]] (3:13-25)
+  frontmatter  4:0-32
+    s  <this note>
+    p  schema:datePublished (frontmatter-key 4:0-20)
+    o  <1916-05-11> (4:22-32)
+  inline-field  9:0-25
+    s  <this note>
+    p  dct:subject (field-key 9:0-11)
+    o  [[Physics]] (9:14-25)
+  inline-field  15:0-21
+    s  <this note>
+    p  foo:bar (field-key 15:0-7)
+    o  [[Physics]] (15:10-21)
+
+# edge-cases/dangling-links.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  inline-field  6:0-36
+    s  <this note>
+    p  developed (field-key 6:0-9)
+    o  [[Unified Field Theory]] (6:12-36)
+  statement  8:0-34
+    s  <this note>
+    p  influenced (fenced 8:0-14)
+    o  [[Quantum Gravity]] (8:15-34)
+
+# edge-cases/empty.md
+  (nothing)
+
+# edge-cases/external-links.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  statement  6:0-90
+    s  <this note>
+    p  supports (fenced 6:0-12)
+    o  [Relativity on Wikipedia](https://en.wikipedia.org/wiki/Theory_of_relativity) (6:13-90)
+
+# edge-cases/fragments.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  statement  6:0-31
+    s  <this note>
+    p  supports (fenced 6:0-12)
+    o  [[Einstein#Youth]] (6:13-31)
+  statement  8:0-65
+    s  <this note>
+    p  influenced (fenced 8:0-14)
+    o  [[Relativity#Field Equations|the field equations]] (8:15-65)
+
+# edge-cases/prose-about-syntax.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  statement  24:0-27
+    s  <this note>
+    p  supports (fenced 24:0-12)
+    o  [[Relativity]] (24:13-27)
+
+# edge-cases/triple-blocks.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  triple-block  8:2-30
+    s  [[Einstein]] (7:0-12)
+    p  developed (fenced 8:2-15)
+    o  [[Relativity]] (8:16-30)
+  triple-block  9:2-21
+    s  [[Einstein]] (7:0-12)
+    p  born in (fenced 9:2-13)
+    o  [[Ulm]] (9:14-21)
+  triple-block  10:2-39
+    s  [[Einstein]] (7:0-12)
+    p  author (fenced 10:2-12)
+    o  [[Annus Mirabilis Papers]] (10:13-39)
+  triple-block  19:2-37
+    s  [[Relativity]] (18:0-14)
+    p  has part (fenced 19:2-14)
+    o  [[Special Relativity]] (19:15-37)
+  triple-block  21:2-37
+    s  [[Relativity]] (18:0-14)
+    p  has part (fenced 21:2-14)
+    o  [[General Relativity]] (21:15-37)
+  inline-field  24:0-30
+    s  <this note>
+    p  developed (field-key 24:0-9)
+    o  [[Something Else]] (24:12-30)
+  ! error  20:0-16  Clause has a predicate but no object.
+
+# edge-cases/unclosed-frontmatter.md
+  inline-field  10:0-23
+    s  <this note>
+    p  developed (field-key 10:0-9)
+    o  [[Nothing]] (10:12-23)
+  ! error  1:0-3  Frontmatter opened with `---` but never closed; ignoring it.
+
+# notes/Einstein.md
+  frontmatter  2:0-16
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Person]] (2:6-16)
+  frontmatter  3:0-16
+    s  <this note>
+    p  born (frontmatter-key 3:0-4)
+    o  <1879-03-14> (3:6-16)
+  frontmatter  4:0-16
+    s  <this note>
+    p  died (frontmatter-key 4:0-4)
+    o  <1955-04-18> (4:6-16)
+  frontmatter  5:0-16
+    s  <this note>
+    p  born in (frontmatter-key 5:0-7)
+    o  [[Ulm]] (5:9-16)
+  frontmatter  6:0-39
+    s  <this note>
+    p  aliases (frontmatter-key 6:0-7)
+    o  <Albert Einstein> (6:10-25)
+  frontmatter  6:0-39
+    s  <this note>
+    p  aliases (frontmatter-key 6:0-7)
+    o  <A. Einstein> (6:27-38)
+  frontmatter  7:0-26
+    s  <this note>
+    p  tags (frontmatter-key 7:0-4)
+    o  <physics> (7:7-14)
+  frontmatter  7:0-26
+    s  <this note>
+    p  tags (frontmatter-key 7:0-4)
+    o  <biography> (7:16-25)
+  inline-field  11:0-19
+    s  <this note>
+    p  field (field-key 11:0-5)
+    o  [[Physics]] (11:8-19)
+  inline-field  12:0-26
+    s  <this note>
+    p  developed (field-key 12:0-9)
+    o  [[Relativity]] (12:12-26)
+  statement  17:0-51
+    s  [[Einstein]] (17:0-12)
+    p  developed (fenced 17:13-26)
+    o  [[Photoelectric Effect]] (17:27-51)
+    ~  confidence (field-key 17:54-64) → <0.99> (17:67-71)
+    ~  source (field-key 17:73-79) → [[Pais 1982]] (17:82-95)
+  three-link  19:0-32
+    s  [[Einstein]] (19:0-12)
+    p  born in (wikilink 19:13-24)
+    o  [[Ulm]] (19:25-32)
+
+# notes/GPS.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+
+# notes/General Relativity.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  frontmatter  3:0-10
+    s  <this note>
+    p  year (frontmatter-key 3:0-4)
+    o  <1915> (3:6-10)
+  frontmatter  4:0-23
+    s  <this note>
+    p  part of (frontmatter-key 4:0-7)
+    o  [[Relativity]] (4:9-23)
+  inline-field  9:0-30
+    s  <this note>
+    p  Has_Part (field-key 9:0-8)
+    o  [[Field Equations]] (9:11-30)
+
+# notes/Physics.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+
+# notes/Relativity.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  frontmatter  3:0-10
+    s  <this note>
+    p  year (frontmatter-key 3:0-4)
+    o  <1915> (3:6-10)
+  frontmatter  4:0-15
+    s  <this note>
+    p  tags (frontmatter-key 4:0-4)
+    o  <physics> (4:7-14)
+  inline-field  8:0-21
+    s  <this note>
+    p  author (field-key 8:0-6)
+    o  [[Einstein]] (8:9-21)
+  statement  10:0-22
+    s  <this note>
+    p  influenced (fenced 10:0-14)
+    o  [[GPS]] (10:15-22)
+    ~  confidence (field-key 10:25-35) → <0.8> (10:38-41)
+
+# notes/Special Relativity.md
+  frontmatter  2:0-14
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Work]] (2:6-14)
+  frontmatter  3:0-10
+    s  <this note>
+    p  year (frontmatter-key 3:0-4)
+    o  <1905> (3:6-10)
+  frontmatter  4:0-23
+    s  <this note>
+    p  part of (frontmatter-key 4:0-7)
+    o  [[Relativity]] (4:9-23)
+  inline-field  14:0-25
+    s  <this note>
+    p  supports (field-key 14:0-8)
+    o  [[Relativity]] (14:11-25)
+
+# notes/Ulm.md
+  frontmatter  2:0-15
+    s  <this note>
+    p  type (frontmatter-key 2:0-4)
+    o  [[Place]] (2:6-15)
+  frontmatter  3:0-45
+    s  <this note>
+    p  sameAs (frontmatter-key 3:0-6)
+    o  <https://www.wikidata.org/entity/Q3013> (3:8-45)
+
+# predicates/author.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <property> (2:5-13)
+  frontmatter  3:0-10
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <author> (3:4-10)
+  frontmatter  4:0-29
+    s  <this note>
+    p  subPropertyOf (frontmatter-key 4:0-13)
+    o  <schema:creator> (4:15-29)
+  frontmatter  5:0-16
+    s  <this note>
+    p  domain (frontmatter-key 5:0-6)
+    o  [[Work]] (5:8-16)
+  frontmatter  6:0-16
+    s  <this note>
+    p  range (frontmatter-key 6:0-5)
+    o  [[Agent]] (6:7-16)
+
+# predicates/born in.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <property> (2:5-13)
+  frontmatter  3:0-11
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <born-in> (3:4-11)
+  frontmatter  4:0-32
+    s  <this note>
+    p  subPropertyOf (frontmatter-key 4:0-13)
+    o  <schema:birthPlace> (4:15-32)
+  frontmatter  5:0-16
+    s  <this note>
+    p  functional (frontmatter-key 5:0-10)
+    o  <true> (5:12-16)
+  frontmatter  6:0-18
+    s  <this note>
+    p  domain (frontmatter-key 6:0-6)
+    o  [[Person]] (6:8-18)
+  frontmatter  7:0-16
+    s  <this note>
+    p  range (frontmatter-key 7:0-5)
+    o  [[Place]] (7:7-16)
+
+# predicates/developed by.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <property> (2:5-13)
+  frontmatter  3:0-16
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <developed-by> (3:4-16)
+  frontmatter  4:0-24
+    s  <this note>
+    p  inverseOf (frontmatter-key 4:0-9)
+    o  [[developed]] (4:11-24)
+  frontmatter  5:0-16
+    s  <this note>
+    p  domain (frontmatter-key 5:0-6)
+    o  [[Work]] (5:8-16)
+  frontmatter  6:0-16
+    s  <this note>
+    p  range (frontmatter-key 6:0-5)
+    o  [[Agent]] (6:7-16)
+
+# predicates/developed.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <property> (2:5-13)
+  frontmatter  3:0-13
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <developed> (3:4-13)
+  frontmatter  4:0-40
+    s  <this note>
+    p  subPropertyOf (frontmatter-key 4:0-13)
+    o  <schema:creator (inverted)> (4:15-40)
+  frontmatter  5:0-27
+    s  <this note>
+    p  inverseOf (frontmatter-key 5:0-9)
+    o  [[developed by]] (5:11-27)
+  frontmatter  6:0-17
+    s  <this note>
+    p  domain (frontmatter-key 6:0-6)
+    o  [[Agent]] (6:8-17)
+  frontmatter  7:0-15
+    s  <this note>
+    p  range (frontmatter-key 7:0-5)
+    o  [[Work]] (7:7-15)
+
+# predicates/has part.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <property> (2:5-13)
+  frontmatter  3:0-12
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <has-part> (3:4-12)
+  frontmatter  4:0-29
+    s  <this note>
+    p  subPropertyOf (frontmatter-key 4:0-13)
+    o  <schema:hasPart> (4:15-29)
+  frontmatter  5:0-22
+    s  <this note>
+    p  inverseOf (frontmatter-key 5:0-9)
+    o  [[part of]] (5:11-22)
+
+# predicates/influenced.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <property> (2:5-13)
+  frontmatter  3:0-14
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <influenced> (3:4-14)
+  frontmatter  4:0-16
+    s  <this note>
+    p  domain (frontmatter-key 4:0-6)
+    o  [[Work]] (4:8-16)
+
+# predicates/part of.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <property> (2:5-13)
+  frontmatter  3:0-11
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <part-of> (3:4-11)
+  frontmatter  4:0-30
+    s  <this note>
+    p  subPropertyOf (frontmatter-key 4:0-13)
+    o  <schema:isPartOf> (4:15-30)
+  frontmatter  5:0-23
+    s  <this note>
+    p  inverseOf (frontmatter-key 5:0-9)
+    o  [[has part]] (5:11-23)
+
+# predicates/supports.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <property> (2:5-13)
+  frontmatter  3:0-12
+    s  <this note>
+    p  id (frontmatter-key 3:0-2)
+    o  <supports> (3:4-12)
+  frontmatter  4:0-28
+    s  <this note>
+    p  subPropertyOf (frontmatter-key 4:0-13)
+    o  <cito:supports> (4:15-28)
+  frontmatter  5:0-16
+    s  <this note>
+    p  domain (frontmatter-key 5:0-6)
+    o  [[Work]] (5:8-16)
+  frontmatter  6:0-15
+    s  <this note>
+    p  range (frontmatter-key 6:0-5)
+    o  [[Work]] (6:7-15)
+
+# vocabulary/prefixes.md
+  frontmatter  2:0-13
+    s  <this note>
+    p  rdf (frontmatter-key 2:0-3)
+    o  <prefixes> (2:5-13)
+  map  prefixes  3:0-9
+    schema = https://schema.org/ (4:0-29)
+    dct = http://purl.org/dc/terms/ (5:0-35)
+    rdfs = http://www.w3.org/2000/01/rdf-schema# (6:0-47)
+    owl = http://www.w3.org/2002/07/owl# (7:0-40)
+    skos = http://www.w3.org/2004/02/skos/core# (8:0-46)
+    cito = http://purl.org/spar/cito/ (9:0-36)
+    mldp = https://markdown-ldp.org/ns# (10:0-38)
+    ex = https://vault.local/ (11:0-30)

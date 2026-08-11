@@ -33,6 +33,7 @@ describe('parseDocument — the whole returned object', () => {
   it('is exactly this', () => {
     assert.deepEqual(parseDocument('notes/Relativity.md', RELATIVITY), {
       path: 'notes/Relativity.md',
+      frontmatterMaps: [],
       diagnostics: [],
       statements: [
         {
@@ -192,6 +193,7 @@ describe('parseDocument — behavioural guarantees', () => {
     assert.deepEqual(parseDocument('n.md', ''), {
       path: 'n.md',
       statements: [],
+      frontmatterMaps: [],
       diagnostics: [],
     })
   })
