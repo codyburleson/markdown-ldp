@@ -127,11 +127,19 @@ Ready** (§6). This is the design work we are doing now.
 - [x] `spec/01-triple-authoring-syntax.md` — authoring surface (draft v0.1)
 - [x] `PLAN.md` — this roadmap (living)
 - [x] `spec/00-vision.md` — anchor: why, architecture, faces, decision log
-      (draft v0.1)
+      (**v0.2**, scrutinized 2026-08-10)
 - [x] `spec/02-data-model.md` — IRI/identity, the **vocabulary layer**,
       Markdown→RDF mapping, provenance, `QuadStore` port (**draft v0.2**,
       scrutinized). **Storage-agnostic** — no physical schema (see ADR-0001)
-- [ ] `spec/03-ldp-http.md` — LDP resources/containers/verbs/conformance target
+- [→] `spec/03-ldp-http.md` — **moved to Phase 5 entry (2026-08-10).** It was
+      listed here, but this phase's own exit criterion reads *"specs 00–02 pass
+      the Definition of Ready"*, and Phase 5's entry already required spec/03
+      finalized. Nothing in Phase 2 or 3 touches LDP; the one LDP-critical
+      commitment (note-as-graph → `GET /note` returns Turtle) is locked in
+      `spec/02` §2. Writing it now would be Phase-5 design ahead of the core, and
+      `spec/02` v0.2 demonstrated the opposite is true — building out the data
+      model *generated* two spec/03 requirements (the IRI ⇄ path map, and what
+      `GET` on a predicate-note returns) that were invisible beforehand.
 - [x] `spec/adr/0001-quad-store-backend.md` — backend question **opened** and
       framed; requirements R1–R8, scale envelope, candidates, benchmark gate
 - [x] `spec/adr/0002-vocabulary-storage.md` — where alignments live and how the
@@ -140,16 +148,19 @@ Ready** (§6). This is the design work we are doing now.
       provenance keying, golden-file stability (**leaning**: canonical string)
 - [x] `spec/adr/0004-domain-range-semantics.md` — constraint vs. RDFS inference
       (**leaning**: keep the names, emit `mldp:`)
-- [~] **Blocking decisions** (§7): IRI scheme, identity default, CURIEs **closed**;
-      remaining — stack/monorepo confirm, LDP conformance target
-- [ ] Repo scaffolding decisions recorded (monorepo layout, test-vault strategy)
-- [ ] **Spec-review gate:** full read-through against the Definition of Ready →
-      declare **spec-complete for the core** before any Phase 2 code
-      *(`spec/02` has had its scrutiny pass — 2026-08-10; `spec/00` and `spec/03`
-      remain, and the gate cannot be declared until `spec/03` exists)*
+- [x] **Blocking decisions** (§7) **all closed**: IRI scheme, identity default,
+      CURIEs, **stack/monorepo**. The LDP conformance target moved to Phase 5
+      with `spec/03` — it was only Phase-1-blocking because `spec/03` was.
+- [x] Repo scaffolding decisions recorded: **TypeScript / Node, yarn workspaces,
+      one `packages/core` to start** (`spec/00` §5). Test-vault strategy is the
+      synthetic vault generator, already scheduled in Phase 2.
+- [x] **Spec-review gate declared 2026-08-10.** Specs 00, 01, 02 have each had a
+      full scrutiny pass against the Definition of Ready (§6); all `[DECIDE]`s
+      that Phase 2 depends on are closed; four ADRs carry the questions that
+      remain, each with a named closure gate. **Phase 2 is unblocked.**
 
 *Exit criterion:* specs 00–02 pass the Definition of Ready; blocking decisions
-closed; a person could implement Phase 2 from the docs alone.
+closed; a person could implement Phase 2 from the docs alone. **Met.**
 
 ### Phase 2 — Semantic core (the library)
 - Entry: review/finalize `spec/02-data-model.md` (mapping + IRI rules).
@@ -191,7 +202,13 @@ closed; a person could implement Phase 2 from the docs alone.
 - Exit: reconcile spec; log deltas.
 
 ### Phase 5 — Faces
-- Entry: `spec/03-ldp-http.md` finalized; MCP + plugin surface specs drafted.
+- Entry: **decide the LDP conformance target** (full W3C LDP 1.0 vs
+  "LDP-inspired") — it determines whether `spec/03` is a conformance document or
+  a design sketch, so it is a *precondition* for writing it, not an output.
+  Then write `spec/03-ldp-http.md` (moved here from Phase 1), and draft the
+  MCP + plugin surface specs. `spec/03` inherits two concrete requirements from
+  `spec/02` v0.2: the **IRI ⇄ path map** (§3.4 — decoding is an optimization,
+  never the mechanism) and **what `GET` on a predicate-note returns** (§5.3.1).
 - [ ] **MCP server** over the graph (query + cite) — **the primary face**
 - [ ] **CLI**: index / query / dump a folder headlessly, no editor involved
 - [ ] **LDP HTTP server**: resources/containers, content negotiation, read path
@@ -242,10 +259,22 @@ A spec is "ready to build from" when:
 
 ## 7. Open decisions (rollup)
 
-Blocking (close during Phase 1):
-- [ ] Confirm stack: TypeScript/Node + yarn; monorepo tool (workspaces? turbo?).
-- [ ] LDP conformance target: full W3C LDP 1.0 vs "LDP-inspired."
-- [ ] **Product name** — repo is *markdown-ldp*; docs now say the same. Confirm.
+Blocking Phase 1: **none remain.** The gate was declared 2026-08-10 (§4).
+
+Deferred to Phase 5 entry (with `spec/03`):
+- [ ] **LDP conformance target:** full W3C LDP 1.0 vs "LDP-inspired." Not
+      Phase-1-blocking — it was only ever blocking because `spec/03` was listed
+      in Phase 1, and nothing in the core depends on it.
+
+Closed — Phase 1 exit (2026-08-10):
+- [x] **Stack → TypeScript / Node, yarn workspaces**, dependency-light, one
+      `packages/core` to start. Workspaces from day one rather than later: §4's
+      Phase 5 names four faces, and the Obsidian plugin's build target (a single
+      bundle with no Node builtins) can never share a package with the core, so
+      the split is arriving regardless. Turbo rejected as premature — a task
+      runner earns its place when several packages have interdependent builds,
+      not at one.
+- [x] **Product name → markdown-ldp**, consistent across repo and docs.
 
 Leaning, safe to spec and build against:
 - [~] **Vocabulary storage → alignments lower to real quads** in the
@@ -414,10 +443,10 @@ Deferrable (from `spec/01`):
 | Doc | Purpose | Status |
 |-----|---------|--------|
 | `PLAN.md` | This roadmap | living |
-| `spec/00-vision.md` | Anchor: why + architecture + decisions | draft v0.1 |
+| `spec/00-vision.md` | Anchor: why + architecture + decisions | **v0.2** (scrutinized) |
 | `spec/01-triple-authoring-syntax.md` | Human authoring surface | **draft v0.2** (scrutinized) |
 | `spec/02-data-model.md` | IRI/identity, **vocabulary layer**, RDF mapping, provenance, `QuadStore` port | **draft v0.2** (scrutinized) |
-| `spec/03-ldp-http.md` | LDP resources/containers/verbs/conformance | **to write ← next** |
+| `spec/03-ldp-http.md` | LDP resources/containers/verbs/conformance | to write — **Phase 5 entry** |
 | `spec/04-index-store.md` | Physical store schema, indexer, scale envelope | Phase 3 entry (from ADR-0001 §5d) |
 | `spec/adr/0001-quad-store-backend.md` | Backend, the RDF/SPARQL split, documented limits | **LEANING SQLite** (closes Phase 3 exit) |
 | `spec/adr/0002-vocabulary-storage.md` | Where alignments live; how closure reads them | **LEANING quads + derived index** (closes Phase 3 entry) |
@@ -428,9 +457,43 @@ Deferrable (from `spec/01`):
 
 ## 9. Changelog
 
-- **2026-08-10 — ▶ RESUME HERE. `spec/02` scrutinized → v0.2; four Phase-2
-  blockers fixed; ADR-0002/0003/0004 opened. `spec/03-ldp-http.md` is the last
-  Phase-1 artifact.**
+- **2026-08-10 (later) — ▶ RESUME HERE. PHASE 1 COMPLETE. Gate declared;
+  `spec/03` moved to Phase 5; stack confirmed. Next: Phase 2, the semantic
+  core.**
+  - **`spec/03` was on the wrong phase's checklist.** Phase 1 listed it, but
+    Phase 1's *own exit criterion* reads "specs **00–02** pass the Definition of
+    Ready", and Phase 5's entry already required it finalized. Nothing in Phase 2
+    or 3 touches LDP, and the one LDP-critical commitment — note-as-graph, which
+    makes `GET /note` → Turtle fall out — is locked in `spec/02` §2. Moved to
+    Phase 5 entry, and the **LDP conformance target moved with it**: it was only
+    Phase-1-blocking because `spec/03` was.
+  - **The evidence for moving it is that v0.2 generated spec/03 requirements.**
+    Building out the data model produced two constraints on the HTTP face that
+    were invisible before — the IRI ⇄ path map (§3.4) and what `GET` on a
+    predicate-note returns (§5.3.1). A spec written *after* the core exists will
+    be better than one written now, and the gate discipline (§5) is about specs
+    not lagging implementation, not about writing them as early as possible.
+  - **`spec/00` scrutinized → v0.2.** As predicted it was mostly derivative, and
+    the findings were reconciliation rather than design: §3 and §6 still said
+    **"three faces"** and folded the CLI into MCP's bullet, though §5's own
+    diagram and this plan had listed four since 2026-08-07 — the CLI was promoted
+    to a primary face by ADR-0001 §5a and the anchor doc never caught up. §3's
+    LDP non-goal also pointed at §7 for a conformance target §7 never contained.
+  - **Stack closed: TypeScript / Node, yarn workspaces**, one `packages/core` to
+    start. Workspaces now rather than later because the Obsidian plugin's build
+    target can never share a package with the core, so the split is arriving
+    regardless. Turbo rejected as premature at one package.
+  - **Spec-review gate declared.** Specs 00, 01, 02 have each had a full scrutiny
+    pass; every `[DECIDE]` Phase 2 depends on is closed; the four open questions
+    are carried by ADRs with named closure gates. **Phase 2 is unblocked.**
+  - **Next best step:** scaffold the workspace and begin **Phase 2** — parser →
+    AST, mapping engine, IRI minting, the `QuadStore` port with its in-memory
+    reference implementation, and golden files in canonical N-Quads (ADR-0003 §5
+    made the test format and the identity rule the same artifact). ADR-0003
+    closes at Phase 2 exit; ADR-0002 at Phase 3 entry.
+
+- **2026-08-10 — `spec/02` scrutinized → v0.2; four Phase-2 blockers fixed;
+  ADR-0002/0003/0004 opened.**
   - **Four defects would each have blocked Phase 2 on their own**, and all four
     were invisible to section-by-section reading — each pair of sections was
     coherent alone and contradictory when composed.

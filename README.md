@@ -147,10 +147,10 @@ Start at the top; each links onward.
 
 | Doc | What it covers | Status |
 |---|---|---|
-| **[spec/00-vision.md](spec/00-vision.md)** | **Start here.** Why, what, architecture, the faces | draft |
+| **[spec/00-vision.md](spec/00-vision.md)** | **Start here.** Why, what, architecture, the faces | draft v0.2 |
 | [spec/01-triple-authoring-syntax.md](spec/01-triple-authoring-syntax.md) | How humans write triples in Markdown | draft v0.2 |
 | [spec/02-data-model.md](spec/02-data-model.md) | Identity/IRIs, the vocabulary layer, Markdown→quads, provenance, the store port | draft v0.2 |
-| `spec/03-ldp-http.md` | LDP resources, containers, verbs | not written |
+| `spec/03-ldp-http.md` | LDP resources, containers, verbs | not written (Phase 5) |
 | `spec/04-index-store.md` | Physical schema, indexer, scale envelope | not written |
 | [spec/adr/0001](spec/adr/0001-quad-store-backend.md) | Store backend + the RDF/SPARQL split | leaning SQLite |
 | [spec/adr/0002](spec/adr/0002-vocabulary-storage.md) | Where alignments live; how query-time closure reads them | leaning quads |
@@ -162,8 +162,8 @@ Start at the top; each links onward.
 
 | Phase | | |
 |---|---|---|
-| 1 | Design & specification | ← **here** |
-| 2 | Semantic core: parser, mapping engine, `QuadStore` port | |
+| 1 | Design & specification | **complete** |
+| 2 | Semantic core: parser, mapping engine, `QuadStore` port | ← **here** |
 | 3 | Index & query: SQLite store, incremental indexer, traversal API | |
 | 4 | Schema & validation: class-notes, shapes | |
 | 5 | Faces: MCP server, CLI, LDP HTTP, Obsidian plugin | |

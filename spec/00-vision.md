@@ -1,8 +1,16 @@
 # Vision & Architecture (ANCHOR)
 
-Status: **Living anchor doc.** Read this first. It states *why* the project
-exists, *what* it is, and the *shape* of how it's built. Detailed normative
-rules live in the numbered specs; decisions are logged here and in `PLAN.md`.
+Status: **Living anchor doc — v0.2, scrutinized 2026-08-10.** Read this first.
+It states *why* the project exists, *what* it is, and the *shape* of how it's
+built. Detailed normative rules live in the numbered specs; decisions are logged
+here and in `PLAN.md`.
+
+**v0.2 revision:** reconciled to the four-face architecture (§3 and §6 still said
+"three faces" and folded the CLI into MCP's bullet, while §5's own diagram and
+`PLAN.md` §4 had listed four since 2026-08-07); stack **confirmed**; the LDP
+conformance target explicitly **deferred to Phase 5** (§3's non-goal pointed at
+§7 for a target §7 never contained); `spec/02` v0.2's identity and vocabulary
+decisions folded into §4 and §7.
 
 ---
 
@@ -58,13 +66,16 @@ interop credibility. The *end* is a trustworthy, queryable, AI-legible graph.
 - A rebuildable RDF **quad store** with per-statement and per-document provenance.
 - A **schema that lives in the vault** (class-notes, predicate-notes; templates
   as constructors) with optional validation.
-- Three faces over one core: **LDP HTTP**, **Obsidian plugin**, **MCP server**.
+- **Four faces over one core** — **MCP server** and **CLI** (primary), **LDP
+  HTTP** and the **Obsidian plugin** (secondary). See §6.
 - Works on **plain Markdown**; Obsidian is the first dialect, not a dependency.
 
 **Non-goals (initially)**
 - **Being a SPARQL engine.** We keep the RDF data model and can hand our quads
   to a real SPARQL engine on demand; we do not implement one. See §5.
-- Perfect W3C LDP conformance on day one (target is chosen deliberately, §7).
+- Perfect W3C LDP conformance on day one. The conformance target is deliberately
+  **deferred to Phase 5**, where `spec/03-ldp-http.md` is written — it gates the
+  HTTP face and nothing in the core (`PLAN.md` §4).
 - Overloading Obsidian `#tags` with formal semantics (a dedicated SKOS layer
   comes later).
 
@@ -75,8 +86,11 @@ interop credibility. The *end* is a trustworthy, queryable, AI-legible graph.
 - **Statement** — a subject–predicate–object triple, authored in a note.
 - **Predicate** — a note (`rdf: property`) defining a relationship's meaning,
   inverse, domain, and range. **Predicates carry the formal semantics.** A
-  predicate-note also carries its **alignment** to an established vocabulary
-  (`subPropertyOf: schema:creator (inverted)`) — see below.
+  predicate-note also carries its **alignment** to a broader predicate
+  (`subPropertyOf: schema:creator (inverted)`) — see below. Its declaration
+  fields lower to real quads in its own graph (`spec/02` §5.3.1), so a
+  predicate's meaning travels with the data; `domain`/`range` are **constraints**
+  and are deliberately not emitted as RDFS inference terms (ADR-0004).
 - **Class** — a note (`rdf: class`) defining an entity type and its shape;
   a **template** is its constructor; an instance is a typed subject.
 - **Named graph** — **each note is a named graph**, named by its IRI. The graph
@@ -133,11 +147,28 @@ SPARQL 1.1 on demand**, in about a second. We never build a compiler; we never
 lose the capability. *Tripwire: if we start writing a join planner or a query
 parser, stop and mount Oxigraph behind the port (ADR-0001 §7a).*
 
-**Stack (assumed; confirm):** TypeScript / Node, yarn, dependency-light. RDF
+**Stack (confirmed 2026-08-10):** TypeScript / Node, **yarn workspaces**,
+dependency-light. One `packages/core` to start; the workspace exists from day one
+because §6's four faces are already named and the Obsidian plugin's build target
+(a single bundle, no Node builtins) can never share a package with the core. RDF
 libraries TBD (N3.js / rdf-ext; Oxigraph or Comunica as the on-demand SPARQL
 hatch only).
 
-## 6. The three faces (and why MCP matters most)
+## 6. The four faces (and why MCP matters most)
+
+**Primary — these define the product:**
+
+- **MCP server** — the AI face, and **the real product**. Instead of an
+  assistant grepping fuzzy text, it traverses a typed graph and cites which note
+  asserted each fact with what confidence. This is the payoff the whole design
+  is built to deliver — and it is the face that must work when the user has *no
+  Markdown client at all*, just a folder and an assistant. Design for that user
+  first.
+- **CLI** — index, query, and dump a vault headlessly, with no editor involved.
+  The proof that the core is genuinely headless, and the face a scripted or
+  automated workflow uses.
+
+**Secondary — these are conveniences over the same core:**
 
 - **LDP HTTP server** — the standards face. Because each note is a named graph
   named by its IRI, `GET /note` naturally returns that graph as Turtle; folders
@@ -145,12 +176,12 @@ hatch only).
   resources turn out to be *the same idea seen from two sides*.
 - **Obsidian plugin** — the authoring face. Predicate autocomplete backed by
   predicate-notes, inline rendering of `(( ))` statements, live graph views.
-- **MCP server (+ CLI)** — the AI face, and **the real product**. Instead of an
-  assistant grepping fuzzy text, it traverses a typed graph and cites which note
-  asserted each fact with what confidence. This is the payoff the whole design
-  is built to deliver — and it is the face that must work when the user has *no
-  Markdown client at all*, just a folder and an assistant. Design for that user
-  first; the plugin is a convenience layered on top.
+
+The ordering is structural, not a value judgement: ADR-0001 §5a established that
+no face may dictate the core's design, and `PLAN.md` §4 sequences MCP and CLI
+first. **The primary/secondary split is why the vocabulary layer exists in the
+shape it does** — a user with no editor passes through no autocomplete, so
+predicate convergence cannot be an authoring-UI feature (`spec/02` §5.1).
 
 ## 7. Key decisions (rationale; full log in `PLAN.md`)
 
