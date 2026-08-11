@@ -1,0 +1,22 @@
+{
+  "name": "markdown-ldp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Turn a folder of Markdown notes into a typed, provenance-bearing knowledge graph",
+  "license": "UNLICENSED",
+  "packageManager": "yarn@4.17.1",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "test": "yarn workspaces foreach --all --verbose run test",
+    "typecheck": "yarn workspaces foreach --all --verbose run typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
